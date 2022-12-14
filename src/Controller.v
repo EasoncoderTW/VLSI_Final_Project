@@ -9,7 +9,13 @@ module Controller (
     input func7, 
     input alu_result,
 
-    output wire stall,
+    input inst_cache_ready; // new
+    input data_cache_ready; // new
+
+    output wire data_hazar_stall, // modified
+    output wire data_mem_stall, // new
+    output wire inst_mem_stall, // news
+
     output wire next_pc_sel, 
     output wire [3:0]F_im_w_en,
 
@@ -116,15 +122,21 @@ assign is_E_use_rs2 = (E_op_reg == `R_type_)? 1'b1:
                             (E_op_reg == `store_)? 1'b1:
                             (E_op_reg == `branch_)? 1'b1:1'b0;
 
-// stall
+// data_hazar_stall
 wire is_DE_overlap;
 wire is_D_rs1_E_rd_overlap;
 wire is_D_rs2_E_rd_overlap;
 
-assign stall = (E_op_reg == `load_) & is_DE_overlap;
+assign data_hazar_stall = (E_op_reg == `load_) & is_DE_overlap;
 assign is_DE_overlap = (is_D_rs1_E_rd_overlap | is_D_rs2_E_rd_overlap);
 assign is_D_rs1_E_rd_overlap = is_D_use_rs1 & (rs1_index == E_rd_reg) & E_rd_reg != 0;
 assign is_D_rs2_E_rd_overlap = is_D_use_rs2 & (rs2_index == E_rd_reg) & E_rd_reg != 0;
+
+// data memory read stall
+assign data_mem_stall = (M_op_reg == `load_) & (~data_cache_ready);
+
+// inst memory read stall
+assign inst_mem_stall = (~inst_cache_ready);
 
 //next_pc_sel normal (+4) when sel = 0
 assign next_pc_sel =   (E_op_reg == `jal_)? 1'b1:
@@ -169,8 +181,7 @@ assign W_rd_index = W_rd_reg;
 assign W_f3 = W_f3_reg;
 
 //wb_sel normal (alu_out) when sel = 0 or (load_out) when = 1 
-assign W_wb_data_sel =   (W_op_reg == `load_)? 1'b1:1'b0;
-
+assign W_wb_data_sel = (W_op_reg == `load_)? 1'b1:1'b0;
 
 always @(posedge clk or posedge rst) begin
     if(rst) begin
@@ -188,20 +199,20 @@ always @(posedge clk or posedge rst) begin
         E_f7_reg <= 1'd0;
     end
     else begin
-        E_op_reg <= (stall)? 5'd0:((next_pc_sel)?5'd0:opcode);
-        E_f3_reg <= (stall)? 3'd0:((next_pc_sel)?3'd0:func3);
-        E_rd_reg <= (stall)? 5'd0:((next_pc_sel)?5'd0:rd_index);
-        E_rs1_reg <= (stall)? 5'd0:((next_pc_sel)?5'd0:rs1_index);
-        E_rs2_reg <= (stall)? 5'd0:((next_pc_sel)?5'd0:rs2_index);
-        E_f7_reg <= (stall)? 1'd0:((next_pc_sel)?'d0:func7);
+        E_op_reg <= (data_hazar_stall)? 5'd0:((data_mem_stall)?E_op_reg:((next_pc_sel)?E_op_reg5'd0:opcode));
+        E_f3_reg <= (data_hazar_stall)? 3'd0:((data_mem_stall)?E_f3_reg:((next_pc_sel)?3'd0:func3));
+        E_rd_reg <= (data_hazar_stall)? 5'd0:((data_mem_stall)?E_rd_reg:((next_pc_sel)?5'd0:rd_index));
+        E_rs1_reg <= (data_hazar_stall)? 5'd0:((data_mem_stall)?E_rs1_reg:((next_pc_sel)?5'd0:rs1_index));
+        E_rs2_reg <= (data_hazar_stall)? 5'd0:((data_mem_stall)?E_rs2_reg:((next_pc_sel)?5'd0:rs2_index));
+        E_f7_reg <= (data_hazar_stall)? 1'd0:((data_mem_stall)?E_f7_reg:((next_pc_sel)?1'd0:func7));
         
-        M_op_reg <= E_op_reg;
-        M_f3_reg <= E_f3_reg;
-        M_rd_reg <= E_rd_reg;
+        M_op_reg <= (data_mem_stall)?M_op_reg:E_op_reg;
+        M_f3_reg <= (data_mem_stall)?M_f3_reg:E_f3_reg;
+        M_rd_reg <= (data_mem_stall)?M_rd_reg:E_rd_reg;
 
-        W_op_reg <= M_op_reg;
-        W_f3_reg <= M_f3_reg;
-        W_rd_reg <= M_rd_reg;
+        W_op_reg <= (data_mem_stall)?W_op_reg:M_op_reg;
+        W_f3_reg <= (data_mem_stall)?W_f3_reg:M_f3_reg;
+        W_rd_reg <= (data_mem_stall)?W_rd_reg:M_rd_reg;
     end
 end
 

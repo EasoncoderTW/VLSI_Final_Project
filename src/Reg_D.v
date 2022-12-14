@@ -2,7 +2,7 @@ module Reg_D (
     input clk, 
     input rst,
     input stall,
-    input jb,
+    input flush,
     input [31:0]pc_in, 
     input [31:0]inst_in, 
     output reg [31:0]pc_out,
@@ -13,8 +13,8 @@ reg [31:0]pc;
 reg [31:0]inst;
 
 always @(*) begin
-    pc = (stall)? pc_out:((jb)?32'd0:pc_in);
-    inst = (stall)? inst_out:((jb)?32'd0:inst_in);
+    pc = (stall)? pc_out:((flush)?32'd0:pc_in);
+    inst = (stall)? inst_out:((flush)?32'd0:inst_in);
 end
 
 always @(posedge clk or posedge rst) begin

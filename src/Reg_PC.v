@@ -7,10 +7,12 @@ module Reg_PC(
 );
 
 reg [31:0]pc;
+/* combinational circuit */
 always @(*) begin
     pc = (stall)?current_pc:next_pc;
 end
 
+/* sequentail citcuit */
 always @(posedge clk or posedge rst) begin
     if(rst)begin
         current_pc <= 32'd0;

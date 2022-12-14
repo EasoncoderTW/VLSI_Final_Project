@@ -2,7 +2,7 @@ module Reg_E (
     input clk, 
     input rst,
     input stall,
-    input jb,
+    input flush,
     input [31:0]pc_in, 
     input [31:0]rs1_data_in, 
     input [31:0]rs2_data_in, 
@@ -19,10 +19,10 @@ reg [31:0]rs2_data;
 reg [31:0]sext_imme;
 
 always @(*) begin
-    pc = (stall)? 32'd0:((jb)?32'd0:pc_in);
-    rs1_data = (stall)? 32'd0:((jb)?32'd0:rs1_data_in);
-    rs2_data = (stall)? 32'd0:((jb)?32'd0:rs2_data_in);
-    sext_imme = (stall)? 32'd0:((jb)?32'd0:sext_imme_in);
+    pc = (stall)? 32'd0:((flush)?32'd0:pc_in);
+    rs1_data = (stall)? 32'd0:((flush)?32'd0:rs1_data_in);
+    rs2_data = (stall)? 32'd0:((flush)?32'd0:rs2_data_in);
+    sext_imme = (stall)? 32'd0:((flush)?32'd0:sext_imme_in);
 end
 
  
