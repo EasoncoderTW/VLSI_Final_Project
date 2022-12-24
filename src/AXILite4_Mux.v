@@ -26,21 +26,21 @@ module AXILite4_Mux(
         input  [31:0]   master_1_readAddr_addr,
         input           master_1_readAddr_valid,
         output          master_1_readAddr_ready,
-        output [31:0]   master_1_readData_data,
+        output [127:0]  master_1_readData_data,
         output          master_1_readData_valid,
         input           master_1_readData_ready,
         // master 2
         input  [31:0]   master_2_readAddr_addr,
         input           master_2_readAddr_valid,
         output          master_2_readAddr_ready,
-        output [31:0]   master_2_readData_data,
+        output [127:0]  master_2_readData_data,
         output          master_2_readData_valid,
         input           master_2_readData_ready,
         // slave
         output [31:0]   slave_readAddr_addr,
         output          slave_readAddr_valid,
         input           slave_readAddr_ready,
-        input  [31:0]   slave_readData_data,
+        input  [127:0]  slave_readData_data,
         input           slave_readData_valid,
         output          slave_readData_ready,
 
@@ -49,7 +49,8 @@ module AXILite4_Mux(
         input  [31:0]   master_1_writeAddr_addr,
         input           master_1_writeAddr_valid,
         output          master_1_writeAddr_ready,
-        input  [31:0]   master_1_writeData_data,
+        input  [127:0]  master_1_writeData_data,
+        input  [15:0]   master_1_writeData_strb,
         input           master_1_writeData_valid,
         output          master_1_writeData_ready,
         output [31:0]   master_1_writeResp_msg,
@@ -59,7 +60,8 @@ module AXILite4_Mux(
         input  [31:0]   master_2_writeAddr_addr,
         input           master_2_writeAddr_valid,
         output          master_2_writeAddr_ready,
-        input  [31:0]   master_2_writeData_data,
+        input  [127:0]  master_2_writeData_data,
+        input  [15:0]   master_2_writeData_strb,
         input           master_2_writeData_valid,
         output          master_2_writeData_ready,
         output [31:0]   master_2_writeResp_msg,
@@ -69,7 +71,8 @@ module AXILite4_Mux(
         output [31:0]   slave_writeAddr_addr,
         output          slave_writeAddr_valid,
         input           slave_writeAddr_ready,
-        output [31:0]   slave_writeData_data,
+        output [127:0]  slave_writeData_data,
+        output [15:0]   slave_writeData_strb,
         output          slave_writeData_valid,
         input           slave_writeData_ready,
         input  [31:0]   slave_writeResp_msg,
@@ -96,7 +99,8 @@ wire [MASTER_NUM-1:0] master_readData_ready;
 
 wire [31:0] master_writeAddr_addr [MASTER_NUM-1:0];
 wire [MASTER_NUM-1:0] master_writeAddr_valid;
-wire [31:0] master_writeData_data [MASTER_NUM-1:0];
+wire [127:0] master_writeData_data [MASTER_NUM-1:0];
+wire [15:0] master_writeData_strb [MASTER_NUM-1:0];
 wire [MASTER_NUM-1:0] master_writeData_valid;
 wire [MASTER_NUM-1:0] master_writeResp_ready;
 
@@ -110,6 +114,8 @@ assign master_writeAddr_addr[1] = master_2_writeAddr_addr;
 assign master_writeAddr_valid = {master_2_writeAddr_valid, master_1_writeAddr_valid};
 assign master_writeData_data[0] = master_1_writeData_data;
 assign master_writeData_data[1] = master_2_writeData_data;
+assign master_writeData_strb[0] = master_1_writeData_strb;
+assign master_writeData_strb[1] = master_2_writeData_strb;
 assign master_writeData_valid = {master_2_writeData_valid, master_1_writeData_valid};
 assign master_writeResp_ready = {master_2_writeResp_ready, master_1_writeResp_ready};
 
@@ -202,10 +208,10 @@ assign write_next_arbitrate = (write_state == sINIT);
 
 // signal generator - read bus
 assign master_1_readAddr_ready = (read_state == sREAD_REQ & read_current_master == 0) ? slave_readAddr_ready : FALSE;
-assign master_1_readData_data = (read_state == sREAD_RESP & read_current_master == 0) ? slave_readData_data : 32'bx;
+assign master_1_readData_data = (read_state == sREAD_RESP & read_current_master == 0) ? slave_readData_data : 128'bx;
 assign master_1_readData_valid = (read_state == sREAD_RESP & read_current_master == 0) ? slave_readData_valid : FALSE;
 assign master_2_readAddr_ready = (read_state == sREAD_REQ & read_current_master == 1) ? slave_readAddr_ready : FALSE;
-assign master_2_readData_data = (read_state == sREAD_RESP & read_current_master == 1) ? slave_readData_data : 32'bx;
+assign master_2_readData_data = (read_state == sREAD_RESP & read_current_master == 1) ? slave_readData_data : 128'bx;
 assign master_2_readData_valid = (read_state == sREAD_RESP & read_current_master == 1) ? slave_readData_valid : FALSE;
 assign slave_readAddr_addr = (read_state == sREAD_REQ & read_current_master == 0) ? master_1_readAddr_addr :
                              (read_state == sREAD_REQ & read_current_master == 1) ? master_2_readAddr_addr : 32'bx;
@@ -228,7 +234,9 @@ assign slave_writeAddr_addr = (write_state == sWRITE_REQ & write_current_master 
 assign slave_writeAddr_valid = (write_state == sWRITE_REQ & write_current_master == 0) ? master_1_writeAddr_valid :
                                (write_state == sWRITE_REQ & write_current_master == 1) ? master_2_writeAddr_valid : FALSE;
 assign slave_writeData_data = (write_state == sWRITE_REQ & write_current_master == 0) ? master_1_writeData_data :
-                              (write_state == sWRITE_REQ & write_current_master == 1) ? master_2_writeData_data : 32'bx;
+                              (write_state == sWRITE_REQ & write_current_master == 1) ? master_2_writeData_data : 128'bx;
+assign slave_writeData_strb = (write_state == sWRITE_REQ & write_current_master == 0) ? master_1_writeData_strb :
+                              (write_state == sWRITE_REQ & write_current_master == 1) ? master_2_writeData_strb : 16'bx;
 assign slave_writeData_valid = (write_state == sWRITE_REQ & write_current_master == 0) ? master_1_writeData_valid :
                                (write_state == sWRITE_REQ & write_current_master == 1) ? master_2_writeData_valid : FALSE;
 assign slave_writeResp_ready = (write_state == sWRITE_RESP & write_current_master == 0) ? master_1_writeResp_ready :
