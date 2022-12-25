@@ -8,7 +8,7 @@ module AXILite4_Master (
     output  [31:0]  readAddr_addr,
     output          readAddr_valid,
     input           readAddr_ready,
-    input   [31:0]  readData_data,
+    input   [127:0] readData_data,
     input           readData_valid,
     output          readData_ready,
     // write port
@@ -31,7 +31,7 @@ module AXILite4_Slave (
     input   [31:0]  readAddr_addr,
     input           readAddr_valid,
     output          readAddr_ready,
-    output  [31:0]  readData_data,
+    output  [127:0] readData_data,
     output          readData_valid,
     input           readData_ready,
     // write port
