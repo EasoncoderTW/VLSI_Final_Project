@@ -1,6 +1,6 @@
 module SRAM(
     input clk,
-    input n_rst,
+    input rst,
     // Replaced signal:
         // input w_en, -> writeAddr_valid & writeData_valid
         // input [15:0]w_mask, -> writeData_strb
@@ -42,8 +42,8 @@ parameter WAITWDATA = 2'b01;
 parameter WAITWADDR = 2'b10;
 parameter WRITE = 2'b11;
 
-always @(posedge clk or negedge n_rst) begin : fsm_trasition
-    if(!n_rst) {read_ps, write_ps} <= 3'b0;
+always @(posedge clk or posedge rst) begin : fsm_trasition
+    if(rst) {read_ps, write_ps} <= 3'b0;
     else begin
         read_ps <= read_ns;
         write_ps <= write_ns;
