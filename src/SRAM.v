@@ -29,8 +29,8 @@ module SRAM(
     input              writeResp_ready
 
 );
-reg read_ps, read_ns;
-reg [1:0] write_ps, write_ns;
+reg read_ps;
+reg [1:0] write_ps;
 reg [7:0] mem [0:65535]; // 1 byte per addr mem
 reg [15:0] read_addr, write_addr;
 reg [127:0] write_data;
@@ -41,14 +41,6 @@ parameter WIDLE = 2'b00;
 parameter WAITWDATA = 2'b01;
 parameter WAITWADDR = 2'b10;
 parameter WRITE = 2'b11;
-
-always @(posedge clk or posedge rst) begin : fsm_trasition
-    if(rst) {read_ps, write_ps} <= 3'b0;
-    else begin
-        read_ps <= read_ns;
-        write_ps <= write_ns;
-    end
-end
 
 // Read related signals
 assign readAddr_ready = (read_ps == RIDLE);
@@ -85,13 +77,15 @@ always @(posedge clk) begin : fsm_read
     endcase
 end
 
-always @(*) begin : fsm_read_ns
-    read_ns = RIDLE;
-    case(read_ps)
-        RIDLE: read_ns = (readAddr_valid) ? READ : RIDLE;
-        READ: read_ns = (readData_ready) ? RIDLE : READ;
-        default: read_ns = 1'bx;
-    endcase
+always @(posedge clk or posedge rst) begin : fsm_trasition_read
+    if(rst) read_ps <= 1'b0;
+    else begin
+        case(read_ps)
+            RIDLE: read_ps <= (readAddr_valid) ? READ : RIDLE;
+            READ: read_ps <= (readData_ready) ? RIDLE : READ;
+            default: read_ps <= 1'bx;
+        endcase
+    end
 end
 
 // Write related signals
@@ -153,24 +147,25 @@ always @(posedge clk) begin
     end
 end
 
-
-always @(*) begin : fsm_write_ns
-    write_ns = WIDLE;
-    case(write_ps)
-        WIDLE: begin
-            case({writeData_valid, writeAddr_valid})
-                2'b00: write_ns = WIDLE;
-                2'b01: write_ns = WAITWDATA;
-                2'b10: write_ns = WAITWADDR;
-                2'b11: write_ns = WRITE;
-                default: write_ns = WIDLE;
-            endcase
-        end
-        WAITWDATA: write_ns = (writeData_valid) ? WRITE : WAITWDATA;
-        WAITWADDR: write_ns = (writeAddr_valid) ? WRITE : WAITWADDR;
-        WRITE: write_ns = WIDLE;
-        default: write_ns = WIDLE;
-    endcase
+always @(posedge clk or posedge rst) begin : fsm_trasition_write
+    if(rst) write_ps <= 2'b0;
+    else begin
+        case(write_ps)
+            WIDLE: begin
+                case({writeData_valid, writeAddr_valid})
+                    2'b00: write_ps <= WIDLE;
+                    2'b01: write_ps <= WAITWDATA;
+                    2'b10: write_ps <= WAITWADDR;
+                    2'b11: write_ps <= WRITE;
+                    default: write_ps <= WIDLE;
+                endcase
+            end
+            WAITWDATA: write_ps <= (writeData_valid) ? WRITE : WAITWDATA;
+            WAITWADDR: write_ps <= (writeAddr_valid) ? WRITE : WAITWADDR;
+            WRITE: write_ps <= WIDLE;
+            default: write_ps <= WIDLE;
+        endcase
+    end
 end
 
 always @(posedge clk) begin : writeResp_valid_handshake
