@@ -162,7 +162,7 @@ always @(posedge clk or posedge rst) begin : fsm_trasition_write
             end
             WAITWDATA: write_ps <= (writeData_valid) ? WRITE : WAITWDATA;
             WAITWADDR: write_ps <= (writeAddr_valid) ? WRITE : WAITWADDR;
-            WRITE: write_ps <= WIDLE;
+            WRITE: write_ps <= (writeResp_valid & writeResp_ready) ? WIDLE : WRITE;
             default: write_ps <= WIDLE;
         endcase
     end
