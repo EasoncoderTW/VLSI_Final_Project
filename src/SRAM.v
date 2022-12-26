@@ -78,7 +78,7 @@ always @(posedge clk) begin : fsm_read
 end
 
 always @(posedge clk or posedge rst) begin : fsm_trasition_read
-    if(rst) read_ps <= 1'b0;
+    if(rst) read_ps <= RIDLE;
     else begin
         case(read_ps)
             RIDLE: read_ps <= (readAddr_valid) ? READ : RIDLE;
@@ -148,7 +148,7 @@ always @(posedge clk) begin
 end
 
 always @(posedge clk or posedge rst) begin : fsm_trasition_write
-    if(rst) write_ps <= 2'b0;
+    if(rst) write_ps <= WIDLE;
     else begin
         case(write_ps)
             WIDLE: begin
