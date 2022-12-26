@@ -9,12 +9,15 @@ module Controller (
     input func7, 
     input alu_result,
 
-    input inst_cache_ready; // new
-    input data_cache_ready; // new
+    input inst_cache_ready, // new
+    input data_cache_ready, // new
 
     output wire data_hazar_stall, // modified
     output wire data_mem_stall, // new
     output wire inst_mem_stall, // news
+
+    output wire F_im_r_en, // new, IF stage instruction memory read enable signal
+    output wire M_dm_r_en, // new, MEM stage data memory read enable signal
 
     output wire next_pc_sel, 
     output wire [3:0]F_im_w_en,
@@ -64,7 +67,8 @@ reg [4:0]E_rs2_reg;
 reg E_f7_reg;
 
 //instuction memory write back enable
-assign F_im_w_en =  4'b0000;
+assign F_im_w_en =  4'b0000;    // never write
+assign F_im_r_en = 1'b1;        // always read
 
 //register data sel in D
 wire is_D_rs1_W_rd_overlap;
@@ -176,6 +180,7 @@ assign M_dm_w_en =  (M_op_reg != `store_)?       4'b0000:
                             (M_f3_reg == `sh_)?       4'b0011:
                             (M_f3_reg == `sw_)?       4'b1111:4'b0000;
 
+assign M_dm_r_en = (M_op_reg == `load_)? 1'b1:1'b0; 
 
 assign W_rd_index = W_rd_reg;
 assign W_f3 = W_f3_reg;
@@ -199,7 +204,7 @@ always @(posedge clk or posedge rst) begin
         E_f7_reg <= 1'd0;
     end
     else begin
-        E_op_reg <= (data_hazar_stall)? 5'd0:((data_mem_stall)?E_op_reg:((next_pc_sel)?E_op_reg5'd0:opcode));
+        E_op_reg <= (data_hazar_stall)? 5'd0:((data_mem_stall)?E_op_reg:((next_pc_sel)?5'd0:opcode));
         E_f3_reg <= (data_hazar_stall)? 3'd0:((data_mem_stall)?E_f3_reg:((next_pc_sel)?3'd0:func3));
         E_rd_reg <= (data_hazar_stall)? 5'd0:((data_mem_stall)?E_rd_reg:((next_pc_sel)?5'd0:rd_index));
         E_rs1_reg <= (data_hazar_stall)? 5'd0:((data_mem_stall)?E_rs1_reg:((next_pc_sel)?5'd0:rs1_index));

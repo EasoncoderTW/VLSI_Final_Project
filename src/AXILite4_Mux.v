@@ -149,9 +149,10 @@ Arbiter write_arbiter(
 
 // next state decoder - read bus
 always @(posedge clk or posedge rst) begin
-    if (rst)
+    if (rst)begin
         read_state <= sINIT;
         read_current_master <= 0;
+    end
     else begin
         case (read_state)
             sINIT: begin
@@ -183,11 +184,11 @@ always @(posedge clk or posedge rst) begin
     else begin
         case (write_state)
             sINIT: begin
-                write_state <= ((master_writeAddr_valid & master_writeData_valid)[write_arbitrate_result]) ? sWRITE_REQ : sINIT;
+                write_state <= (master_writeAddr_valid[write_current_master] & master_writeData_valid[write_arbitrate_result]) ? sWRITE_REQ : sINIT;
                 write_current_master <= write_arbitrate_result;
             end
             sWRITE_REQ: begin
-                write_state <= ((master_writeAddr_valid & master_writeData_valid)[write_current_master] & slave_writeAddr_ready & slave_writeData_ready) ? sWRITE_RESP : sWRITE_REQ;
+                write_state <= (master_writeAddr_valid[write_current_master] & master_writeData_valid[write_current_master] & slave_writeAddr_ready & slave_writeData_ready) ? sWRITE_RESP : sWRITE_REQ;
                 write_current_master <= write_current_master;
             end
             sWRITE_RESP: begin

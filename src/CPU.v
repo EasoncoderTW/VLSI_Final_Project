@@ -17,12 +17,49 @@
 module CPU(
     input clk,
     input rst,
-    /*
-        TBD: 2 AXI Lite 4  master IO for Cache Memory
-    */
+    // Inst Cache - AXI Lite 4 master IO
+        // read port
+    output  [31:0]       Inst_Cahe_readAddr_addr,
+    output               Inst_Cahe_readAddr_valid,
+    input                Inst_Cahe_readAddr_ready,
+    input   [127:0]      Inst_Cahe_readData_data,
+    input                Inst_Cahe_readData_valid,
+    output               Inst_Cahe_readData_ready,
+        // write port
+    output  [31:0]       Inst_Cahe_writeAddr_addr,
+    output               Inst_Cahe_writeAddr_valid,
+    input                Inst_Cahe_writeAddr_ready,
+    output  [127:0]      Inst_Cahe_writeData_data,
+    output  [15:0]       Inst_Cahe_writeData_strb,
+    output               Inst_Cahe_writeData_valid,
+    input                Inst_Cahe_writeData_ready,
+    input   [31:0]       Inst_Cahe_writeResp_msg,
+    input                Inst_Cahe_writeResp_valid,
+    output               Inst_Cahe_writeResp_ready,
+
+    // Data Cache - AXI Lite 4 master IO
+        // read port
+    output  [31:0]       Data_Cahe_readAddr_addr,
+    output               Data_Cahe_readAddr_valid,
+    input                Data_Cahe_readAddr_ready,
+    input   [127:0]      Data_Cahe_readData_data,
+    input                Data_Cahe_readData_valid,
+    output               Data_Cahe_readData_ready,
+        // write port
+    output  [31:0]       Data_Cahe_writeAddr_addr,
+    output               Data_Cahe_writeAddr_valid,
+    input                Data_Cahe_writeAddr_ready,
+    output  [127:0]      Data_Cahe_writeData_data,
+    output  [15:0]       Data_Cahe_writeData_strb,
+    output               Data_Cahe_writeData_valid,
+    input                Data_Cahe_writeData_ready,
+    input   [31:0]       Data_Cahe_writeResp_msg,
+    input                Data_Cahe_writeResp_valid,
+    output               Data_Cahe_writeResp_ready
 );
 
 wire [3:0] F_im_w_en;
+wire F_im_r_en;
 wire [31:0] pc_now;
 wire [31:0] pc_next;
 wire [31:0] inst;
@@ -58,14 +95,31 @@ Adder add_four(
 
 Cache inst_cache(
     .clk(clk),
+    .rst(rst),
+    // Controller IO
     .w_en(F_im_w_en),
+    .r_en(F_im_r_en),
     .address(pc_now[15:0]),
-    .write_data(32'd0),
-    .read_data(inst)
-    .ready(inst_cache_ready)
-    /*
-       TBD IO
-    */
+    .write_data(32'd0), // always zero
+    .read_data(inst),
+    .ready(inst_cache_ready),
+    // AXI Lite 4 Bus master IO
+    .readAddr_addr(Inst_Cahe_readAddr_addr),
+    .readAddr_valid(Inst_Cahe_readAddr_valid),
+    .readAddr_ready(Inst_Cahe_readAddr_ready),
+    .readData_data(Inst_Cahe_readData_data),
+    .readData_valid(Inst_Cahe_readData_valid),
+    .readData_ready(Inst_Cahe_readData_ready),
+    .writeAddr_addr(Inst_Cahe_writeAddr_addr),
+    .writeAddr_valid(Inst_Cahe_writeAddr_valid),
+    .writeAddr_ready(Inst_Cahe_writeAddr_ready),
+    .writeData_data(Inst_Cahe_writeData_data),
+    .writeData_strb(Inst_Cahe_writeData_strb),
+    .writeData_valid(Inst_Cahe_writeData_valid),
+    .writeData_ready(Inst_Cahe_writeData_ready),
+    .writeResp_msg(Inst_Cahe_writeResp_msg),
+    .writeResp_valid(Inst_Cahe_writeResp_valid),
+    .writeResp_ready(Inst_Cahe_writeResp_ready)
 );
 
 //================================================================================
@@ -116,6 +170,7 @@ wire E_f7;
 wire [4:0] E_op;
 wire [2:0] W_f3;
 wire [3:0] M_dm_w_en;
+wire M_dm_r_en;
 wire W_wb_en;
 wire W_wb_data_sel;
 wire [4:0]W_rd_index;
@@ -149,6 +204,7 @@ Controller controller(
     .E_f3(E_f3),
     .E_f7(E_f7),
     .M_dm_w_en(M_dm_w_en),
+    .M_dm_r_en(M_dm_r_en),
     .W_wb_en(W_wb_en),
     .W_rd_index(W_rd_index),
     .W_f3(W_f3),
@@ -288,14 +344,29 @@ wire [31:0] ld_data;
 
 Cache data_cache(
     .clk(clk),
+    .rst(rst),
+    .r_en(M_dm_r_en),
     .w_en(M_dm_w_en),
     .address(reg_m_alu_out_out[15:0]),
     .write_data(reg_m_rs2_data_out),
     .read_data(ld_data),
-    .ready(data_cache_ready)
-    /*
-     TBD IO
-    */
+    .ready(data_cache_ready),
+    // AXI Lite 4 Bus master IO
+    .readAddr_addr(Data_Cahe_readAddr_addr),
+    .readAddr_valid(Data_Cahe_readAddr_valid),
+    .readAddr_ready(Data_Cahe_readAddr_ready),
+    .readData_data(Data_Cahe_readData_data),
+    .readData_valid(Data_Cahe_readData_valid),
+    .readData_ready(Data_Cahe_readData_ready),
+    .writeAddr_addr(Data_Cahe_writeAddr_addr),
+    .writeAddr_valid(Data_Cahe_writeAddr_valid),
+    .writeAddr_ready(Data_Cahe_writeAddr_ready),
+    .writeData_data(Data_Cahe_writeData_data),
+    .writeData_strb(Data_Cahe_writeData_strb),
+    .writeData_valid(Data_Cahe_writeData_valid),
+    .writeData_ready(Data_Cahe_writeData_ready),
+    .writeResp_msg(Data_Cahe_writeResp_msg),
+    .writeResp_valid(Data_Cahe_writeResp_valid)
 );
 //===================================================================================
 
