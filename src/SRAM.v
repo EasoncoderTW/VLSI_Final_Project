@@ -47,12 +47,12 @@ assign readAddr_ready = (read_ps == RIDLE);
 always @(posedge clk) begin : fsm_read
     case(read_ps)
         RIDLE: begin
-            read_addr <= (readAddr_valid) ? readAddr_addr[15:0] : 16'bx;
+            read_addr <= (readAddr_valid) ? readAddr_addr[15:0] : read_addr;
             readData_valid <= 1'b0;
             readData_data <= 128'b0;
         end
         READ: begin
-            read_addr <= 16'bx;
+            read_addr <= read_addr;
             readData_valid <= 1'b1;
             readData_data <= {
                 mem[read_addr+16'd15],
@@ -73,7 +73,7 @@ always @(posedge clk) begin : fsm_read
                 mem[read_addr]
             };
         end
-        default: {read_addr, readData_valid, readData_data} <= 145'bx;
+        default: {read_addr, readData_valid, readData_data} <= 145'b0;
     endcase
 end
 
@@ -83,7 +83,7 @@ always @(posedge clk or posedge rst) begin : fsm_trasition_read
         case(read_ps)
             RIDLE: read_ps <= (readAddr_valid) ? READ : RIDLE;
             READ: read_ps <= (readData_ready) ? RIDLE : READ;
-            default: read_ps <= 1'bx;
+            default: read_ps <= RIDLE;
         endcase
     end
 end
@@ -96,20 +96,20 @@ assign writeResp_msg = 32'b0;
 always @(posedge clk) begin : fsm_write
     case(write_ps)
         WIDLE: begin
-            write_addr <= (writeAddr_valid) ? writeAddr_addr[15:0] : 16'bx;
-            write_data <= (writeData_valid) ? writeData_data : 128'bx;
+            write_addr <= (writeAddr_valid) ? writeAddr_addr[15:0] : write_addr;
+            write_data <= (writeData_valid) ? writeData_data : write_data;
         end
         WAITWADDR: begin
-            write_addr <= (writeAddr_valid) ? writeAddr_addr[15:0] : 16'bx;
+            write_addr <= (writeAddr_valid) ? writeAddr_addr[15:0] : write_addr;
             write_data <= write_data;
         end
         WAITWDATA: begin
             write_addr <= write_addr;
-            write_data <= (writeData_valid) ? writeData_data : 128'bx;
+            write_data <= (writeData_valid) ? writeData_data : write_data;
         end
         default: begin
-            write_addr <= 16'bx;
-            write_data <= 128'bx;
+            write_addr <= 16'b0;
+            write_data <= 128'b0;
         end
     endcase
 end
