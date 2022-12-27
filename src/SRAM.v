@@ -14,7 +14,7 @@ module SRAM(
     input              readAddr_valid,
     output             readAddr_ready,
     output reg [127:0] readData_data,
-    output reg         readData_valid, // sender data is valid
+    output             readData_valid, // sender data is valid
     input              readData_ready, // receiver can deal with "current" request
     // write port
     input  [31:0]      writeAddr_addr,
@@ -30,50 +30,51 @@ module SRAM(
 
 );
 reg read_ps;
-reg [1:0] write_ps;
+reg [2:0] write_ps;
 reg [7:0] mem [0:65535]; // 1 byte per addr mem
-reg [15:0] read_addr, write_addr;
+reg [15:0] write_addr;
 reg [127:0] write_data;
+
+wire [15:0] read_addr;
 
 parameter RIDLE = 1'b0;
 parameter READ = 1'b1;
-parameter WIDLE = 2'b00;
-parameter WAITWDATA = 2'b01;
-parameter WAITWADDR = 2'b10;
-parameter WRITE = 2'b11;
+parameter WIDLE = 3'b000;
+parameter WAITWDATA = 3'b001;
+parameter WAITWADDR = 3'b010;
+parameter WRITE = 3'b011;
+parameter WRITERESP = 3'b100;   // avoid keep writing, use new state to check hand shaking
 
 // Read related signals
 assign readAddr_ready = (read_ps == RIDLE);
+assign readData_valid = (read_ps == READ);
+assign read_addr = readAddr_addr[15:0];
 always @(posedge clk) begin : fsm_read
     case(read_ps)
         RIDLE: begin
-            read_addr <= (readAddr_valid) ? readAddr_addr[15:0] : read_addr;
-            readData_valid <= 1'b0;
-            readData_data <= 128'b0;
-        end
-        READ: begin
-            read_addr <= read_addr;
-            readData_valid <= 1'b1;
             readData_data <= {
-                mem[read_addr+16'd15],
-                mem[read_addr+16'd14],
-                mem[read_addr+16'd13],
-                mem[read_addr+16'd12],
-                mem[read_addr+16'd11],
-                mem[read_addr+16'd10],
-                mem[read_addr+16'd9],
-                mem[read_addr+16'd8],
-                mem[read_addr+16'd7],
-                mem[read_addr+16'd6],
-                mem[read_addr+16'd5],
-                mem[read_addr+16'd4],
-                mem[read_addr+16'd3],
-                mem[read_addr+16'd2],
-                mem[read_addr+16'd1],
+                mem[read_addr + 16'd15],
+                mem[read_addr + 16'd14],
+                mem[read_addr + 16'd13],
+                mem[read_addr + 16'd12],
+                mem[read_addr + 16'd11],
+                mem[read_addr + 16'd10],
+                mem[read_addr + 16'd9],
+                mem[read_addr + 16'd8],
+                mem[read_addr + 16'd7],
+                mem[read_addr + 16'd6],
+                mem[read_addr + 16'd5],
+                mem[read_addr + 16'd4],
+                mem[read_addr + 16'd3],
+                mem[read_addr + 16'd2],
+                mem[read_addr + 16'd1],
                 mem[read_addr]
             };
         end
-        default: {read_addr, readData_valid, readData_data} <= 145'b0;
+        READ: begin
+            readData_data <= readData_data;
+        end
+        default: readData_data <= 128'bx;
     endcase
 end
 
