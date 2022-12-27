@@ -25,7 +25,7 @@ module SRAM(
     input              writeData_valid,
     output             writeData_ready,
     output [31:0]      writeResp_msg,  
-    output reg         writeResp_valid,
+    output             writeResp_valid,
     input              writeResp_ready
 
 );
@@ -92,7 +92,8 @@ end
 // Write related signals
 assign writeAddr_ready = (write_ps == WIDLE || write_ps == WAITWADDR);
 assign writeData_ready = (write_ps == WIDLE || write_ps == WAITWDATA);
-assign writeResp_msg = 32'b0;
+assign writeResp_valid = (write_ps == WRITERESP);
+assign writeResp_msg = 32'b0; // currently useless
 
 always @(posedge clk) begin : fsm_write
     case(write_ps)
@@ -114,16 +115,6 @@ always @(posedge clk) begin : fsm_write
         end
     endcase
 end
-/*
-always @(posedge clk) begin : write_mem
-    if(write_ps == WRITE) begin
-        for(i = 0; i < 16; i = i + 1) begin
-            if(writeData_strb[i]) mem[write_addr + i] <= write_data[7+8*i:0+8*i];
-            else mem[write_addr + i] <= mem[write_addr + i];
-        end
-    end
-end
-*/
 
 // Something like write_data[7+8*i:0+8*i] will cause err.
 // Because the index range with semicolon must be const based on verilog's std.
@@ -163,16 +154,10 @@ always @(posedge clk or posedge rst) begin : fsm_trasition_write
             end
             WAITWDATA: write_ps <= (writeData_valid) ? WRITE : WAITWDATA;
             WAITWADDR: write_ps <= (writeAddr_valid) ? WRITE : WAITWADDR;
-            WRITE: write_ps <= (writeResp_valid & writeResp_ready) ? WIDLE : WRITE;
+            WRITE: write_ps <= WRITERESP;
+            WRITERESP: write_ps <= (writeResp_ready) ? WIDLE : WRITERESP;
             default: write_ps <= WIDLE;
         endcase
-    end
-end
-
-always @(posedge clk) begin : writeResp_valid_handshake
-    if(write_ps == WRITE) writeResp_valid <= 1'b1;
-    else begin
-        writeResp_valid <= (writeResp_valid & writeResp_ready) ? 1'b0 : writeResp_valid;
     end
 end
 
