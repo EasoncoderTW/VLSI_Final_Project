@@ -4,9 +4,10 @@
 
 module Top (
     input clk,
-    input rst
+    input rst,
+    output halt
 );
-
+    wire halt;
     // CPU Instruction Cache - AXI Lite 4 master IO wire
         // read port
     wire  [31:0]    Inst_Cahe_readAddr_addr;
@@ -126,7 +127,7 @@ module Top (
         .slave_writeResp_valid(SRAM_writeResp_valid),
         .slave_writeResp_ready(SRAM_writeResp_ready)
     );
-    CPU cpu(.clk(clk), .rst(rst),
+    CPU cpu(.clk(clk), .rst(rst), .halt(halt),
         // Inst Cache - AXI Lite 4 master IO
             // read port
         .Inst_Cahe_readAddr_addr(Inst_Cahe_readAddr_addr),

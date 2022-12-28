@@ -55,7 +55,9 @@ module CPU(
     input                Data_Cahe_writeData_ready,
     input   [31:0]       Data_Cahe_writeResp_msg,
     input                Data_Cahe_writeResp_valid,
-    output               Data_Cahe_writeResp_ready
+    output               Data_Cahe_writeResp_ready,
+    // halt
+    output  halt
 );
 
 wire [3:0] F_im_w_en;
@@ -66,16 +68,17 @@ wire [31:0] inst;
 wire next_pc_sel;
 wire [31:0] pc_add_four;
 wire [31:0] jb_pc;
-wire data_hazar_stall;
+wire data_hazard_stall;
 wire data_mem_stall;
 wire inst_mem_stall;
 wire inst_cache_ready;
 wire data_cache_ready;
+wire halt;
 
 Reg_PC pc(
     .clk(clk),
     .rst(rst),
-    .stall(stall|inst_mem_stall|data_mem_stall),
+    .stall(stall|inst_mem_stall|data_mem_stall|halt),
     .next_pc(pc_next),
     .current_pc(pc_now)
 );
@@ -131,7 +134,7 @@ wire [31:0]reg_d_inst;
 Reg_D reg_d( 
     .clk(clk),
     .rst(rst),
-    .stall(data_hazar_stall|data_mem_stall),
+    .stall(data_hazard_stall|data_mem_stall|halt),
     .flush(flush|inst_mem_stall),
     .pc_in(pc_now), 
     .inst_in(inst), 
@@ -188,7 +191,8 @@ Controller controller(
     .alu_result(alu_out[0]),
     .inst_cache_ready(inst_cache_ready),
     .data_cache_ready(data_cache_ready),
-    .data_hazar_stall(data_hazar_stall),
+    .data_hazard_stall(data_hazard_stall),
+    .halt(halt),
     .data_mem_stall(data_mem_stall),
     .inst_mem_stall(inst_mem_stall),
     .next_pc_sel(next_pc_sel),  
@@ -258,7 +262,7 @@ wire [31:0] reg_e_sext_imme;
 Reg_E reg_e( 
     .clk(clk),
     .rst(rst),
-    .stall(data_hazar_stall|data_mem_stall),
+    .stall(data_hazard_stall|data_mem_stall|halt),
     .flush(flush),
     .pc_in(reg_d_pc), 
     .rs1_data_in(mux_d_rs1_data_out), 
@@ -333,7 +337,7 @@ wire [31:0] reg_m_rs2_data_out;
 Reg_M reg_m( 
     .clk(clk),
     .rst(rst),
-    .stall(data_mem_stall),
+    .stall(data_mem_stall|halt),
     .alu_out_in(alu_out), 
     .rs2_data_in(mux_e_rs2_data_out), 
     .alu_out_out(reg_m_alu_out_out), 
@@ -376,7 +380,7 @@ wire [31:0]reg_w_ld_data_out;
 Reg_W reg_w( 
     .clk(clk),
     .rst(rst),
-    .stall(data_mem_stall),
+    .stall(data_mem_stall|halt),
     .alu_out_in(reg_m_alu_out_out), 
     .ld_data_in(ld_data), 
     .alu_out_out(reg_w_alu_out_out),

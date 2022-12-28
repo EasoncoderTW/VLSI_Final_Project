@@ -14,7 +14,8 @@ module Controller (
 
     output wire data_hazar_stall, // modified
     output wire data_mem_stall, // new
-    output wire inst_mem_stall, // news
+    output wire inst_mem_stall, // new
+    output wire halt, // new
 
     output wire F_im_r_en, // new, IF stage instruction memory read enable signal
     output wire M_dm_r_en, // new, MEM stage data memory read enable signal
@@ -51,6 +52,7 @@ module Controller (
 `define branch_   5'b11000
 `define I_type_   5'b00100
 `define R_type_   5'b01100
+`define HCF    5'b00010  // new halt for cpu
 
 //store func3
 `define sb_ 3'b000
@@ -141,6 +143,9 @@ assign data_mem_stall = (M_op_reg == `load_) & (~data_cache_ready);
 
 // inst memory read stall
 assign inst_mem_stall = (~inst_cache_ready);
+
+// cpu halt
+assign halt = (W_op_reg == `HCF);
 
 //next_pc_sel normal (+4) when sel = 0
 assign next_pc_sel =   (E_op_reg == `jal_)? 1'b1:

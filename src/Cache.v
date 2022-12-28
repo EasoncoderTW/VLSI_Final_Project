@@ -1,4 +1,4 @@
-module cache(
+module Cache(
     input clk,
     /* CPU IO */
     input [3:0] w_en, // write enable for 4 bytes
