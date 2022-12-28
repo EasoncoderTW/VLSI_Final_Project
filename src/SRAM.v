@@ -50,7 +50,7 @@ assign readAddr_ready = (read_ps == RIDLE);
 assign readData_valid = (read_ps == READ);
 assign read_addr = readAddr_addr[15:0];
 always @(posedge clk) begin : fsm_read
-    case(read_ps)
+     case(read_ps)
         RIDLE: begin
             readData_data <= {
                 mem[read_addr + 16'd15],
@@ -74,7 +74,7 @@ always @(posedge clk) begin : fsm_read
         READ: begin
             readData_data <= readData_data;
         end
-        default: readData_data <= 128'bx;
+        default: readData_data <= 128'b0;
     endcase
 end
 
@@ -82,8 +82,8 @@ always @(posedge clk or posedge rst) begin : fsm_trasition_read
     if(rst) read_ps <= RIDLE;
     else begin
         case(read_ps)
-            RIDLE: read_ps <= (readAddr_valid) ? READ : RIDLE;
-            READ: read_ps <= (readData_ready) ? RIDLE : READ;
+            RIDLE: read_ps <= (readAddr_valid == 1) ? READ : RIDLE;
+            READ: read_ps <= (readData_ready == 1) ? RIDLE : READ;
             default: read_ps <= RIDLE;
         endcase
     end
@@ -98,16 +98,16 @@ assign writeResp_msg = 32'b0; // currently useless
 always @(posedge clk) begin : fsm_write
     case(write_ps)
         WIDLE: begin
-            write_addr <= (writeAddr_valid) ? writeAddr_addr[15:0] : write_addr;
-            write_data <= (writeData_valid) ? writeData_data : write_data;
+            write_addr <= (writeAddr_valid == 1) ? writeAddr_addr[15:0] : write_addr;
+            write_data <= (writeData_valid == 1) ? writeData_data : write_data;
         end
         WAITWADDR: begin
-            write_addr <= (writeAddr_valid) ? writeAddr_addr[15:0] : write_addr;
+            write_addr <= (writeAddr_valid == 1) ? writeAddr_addr[15:0] : write_addr;
             write_data <= write_data;
         end
         WAITWDATA: begin
             write_addr <= write_addr;
-            write_data <= (writeData_valid) ? writeData_data : write_data;
+            write_data <= (writeData_valid == 1) ? writeData_data : write_data;
         end
         default: begin
             write_addr <= 16'b0;
@@ -120,22 +120,22 @@ end
 // Because the index range with semicolon must be const based on verilog's std.
 always @(posedge clk) begin
     if(write_ps == WRITE) begin
-        mem[write_addr + 16'd15] <= (writeData_strb[15]) ? write_data[127:120] : mem[write_addr + 16'd15];
-        mem[write_addr + 16'd14] <= (writeData_strb[14]) ? write_data[119:112] : mem[write_addr + 16'd14];
-        mem[write_addr + 16'd13] <= (writeData_strb[13]) ? write_data[111:104] : mem[write_addr + 16'd13];
-        mem[write_addr + 16'd12] <= (writeData_strb[12]) ? write_data[103:96]  : mem[write_addr + 16'd12];
-        mem[write_addr + 16'd11] <= (writeData_strb[11]) ? write_data[95:88]   : mem[write_addr + 16'd11];
-        mem[write_addr + 16'd10] <= (writeData_strb[10]) ? write_data[87:80]   : mem[write_addr + 16'd10];
-        mem[write_addr + 16'd9]  <= (writeData_strb[9])  ? write_data[79:72]   : mem[write_addr + 16'd9];
-        mem[write_addr + 16'd8]  <= (writeData_strb[8])  ? write_data[71:64]   : mem[write_addr + 16'd8];
-        mem[write_addr + 16'd7]  <= (writeData_strb[7])  ? write_data[63:56]   : mem[write_addr + 16'd7];
-        mem[write_addr + 16'd6]  <= (writeData_strb[6])  ? write_data[55:48]   : mem[write_addr + 16'd6];
-        mem[write_addr + 16'd5]  <= (writeData_strb[5])  ? write_data[47:40]   : mem[write_addr + 16'd5];
-        mem[write_addr + 16'd4]  <= (writeData_strb[4])  ? write_data[39:32]   : mem[write_addr + 16'd4];
-        mem[write_addr + 16'd3]  <= (writeData_strb[3])  ? write_data[31:24]   : mem[write_addr + 16'd3];
-        mem[write_addr + 16'd2]  <= (writeData_strb[2])  ? write_data[23:16]   : mem[write_addr + 16'd2];
-        mem[write_addr + 16'd1]  <= (writeData_strb[1])  ? write_data[15:8]    : mem[write_addr + 16'd1];
-        mem[write_addr + 16'd0]  <= (writeData_strb[0])  ? write_data[7:0]     : mem[write_addr + 16'd0];
+        mem[write_addr + 16'd15] <= (writeData_strb[15] == 1) ? write_data[127:120] : mem[write_addr + 16'd15];
+        mem[write_addr + 16'd14] <= (writeData_strb[14] == 1) ? write_data[119:112] : mem[write_addr + 16'd14];
+        mem[write_addr + 16'd13] <= (writeData_strb[13] == 1) ? write_data[111:104] : mem[write_addr + 16'd13];
+        mem[write_addr + 16'd12] <= (writeData_strb[12] == 1) ? write_data[103:96]  : mem[write_addr + 16'd12];
+        mem[write_addr + 16'd11] <= (writeData_strb[11] == 1) ? write_data[95:88]   : mem[write_addr + 16'd11];
+        mem[write_addr + 16'd10] <= (writeData_strb[10] == 1) ? write_data[87:80]   : mem[write_addr + 16'd10];
+        mem[write_addr + 16'd9]  <= (writeData_strb[9] == 1)  ? write_data[79:72]   : mem[write_addr + 16'd9];
+        mem[write_addr + 16'd8]  <= (writeData_strb[8] == 1)  ? write_data[71:64]   : mem[write_addr + 16'd8];
+        mem[write_addr + 16'd7]  <= (writeData_strb[7] == 1)  ? write_data[63:56]   : mem[write_addr + 16'd7];
+        mem[write_addr + 16'd6]  <= (writeData_strb[6] == 1)  ? write_data[55:48]   : mem[write_addr + 16'd6];
+        mem[write_addr + 16'd5]  <= (writeData_strb[5] == 1)  ? write_data[47:40]   : mem[write_addr + 16'd5];
+        mem[write_addr + 16'd4]  <= (writeData_strb[4] == 1)  ? write_data[39:32]   : mem[write_addr + 16'd4];
+        mem[write_addr + 16'd3]  <= (writeData_strb[3] == 1)  ? write_data[31:24]   : mem[write_addr + 16'd3];
+        mem[write_addr + 16'd2]  <= (writeData_strb[2] == 1)  ? write_data[23:16]   : mem[write_addr + 16'd2];
+        mem[write_addr + 16'd1]  <= (writeData_strb[1] == 1)  ? write_data[15:8]    : mem[write_addr + 16'd1];
+        mem[write_addr + 16'd0]  <= (writeData_strb[0] == 1)  ? write_data[7:0]     : mem[write_addr + 16'd0];
     end
 end
 
@@ -144,7 +144,7 @@ always @(posedge clk or posedge rst) begin : fsm_trasition_write
     else begin
         case(write_ps)
             WIDLE: begin
-                case({writeData_valid, writeAddr_valid})
+                case({writeData_valid == 1, writeAddr_valid == 1})
                     2'b00: write_ps <= WIDLE;
                     2'b01: write_ps <= WAITWDATA;
                     2'b10: write_ps <= WAITWADDR;
@@ -152,10 +152,10 @@ always @(posedge clk or posedge rst) begin : fsm_trasition_write
                     default: write_ps <= WIDLE;
                 endcase
             end
-            WAITWDATA: write_ps <= (writeData_valid) ? WRITE : WAITWDATA;
-            WAITWADDR: write_ps <= (writeAddr_valid) ? WRITE : WAITWADDR;
+            WAITWDATA: write_ps <= (writeData_valid == 1) ? WRITE : WAITWDATA;
+            WAITWADDR: write_ps <= (writeAddr_valid == 1) ? WRITE : WAITWADDR;
             WRITE: write_ps <= WRITERESP;
-            WRITERESP: write_ps <= (writeResp_ready) ? WIDLE : WRITERESP;
+            WRITERESP: write_ps <= (writeResp_ready == 1) ? WIDLE : WRITERESP;
             default: write_ps <= WIDLE;
         endcase
     end
