@@ -10,22 +10,22 @@
 
 `define WORD 32
 `define OFFSET_LENGTH 4
-`define CACHE_LINE_SIZE (1<<`OFFSET_LENGTH)
-`define CACHE_LINE_BIT_LENGTH (`CACHE_LINE_SIZE<<3)
+`define CACHE_LINE_SIZE 16
+`define CACHE_LINE_BIT_LENGTH 128
 `define INDEX_LENGTH 4
-`define CACHE_LINE_NUM (1<<`INDEX_LENGTH)
-`define REG_NUM (`CACHE_LINE_NUM<<2)
+`define CACHE_LINE_NUM 16
+`define REG_NUM 64
 `define TAG_LENGTH 8
 module Cache(
     input clk,
     input rst, 
     /* CPU IO */
-    input r_en;       //
-    input [3:0] w_en; // write enable for 4 bytes
-    input [15:0] address;
-    input [31:0] write_data;
-    output [31:0] read_data;
-    output ready;
+    input r_en,       //
+    input [3:0] w_en, // write enable for 4 bytes
+    input [15:0] address,
+    input [31:0] write_data,
+    output [31:0] read_data,
+    output ready,
     /* AXI Lite 4 IO */
     // read port
     output  [31:0]  readAddr_addr,
@@ -110,7 +110,7 @@ Data16Mux Data16Mux(.sel(dataram_sel), .A(cache_line_strb), .B(16'hffff), .out(d
 
 // DataRam flow out a cache line in one read
 // Thus, we have to choose which word to flow into our processor
-Data32Mux Data32Mux(
+Data32Mux4to1 Data32Mux4to1(
     .sel(address[3:2]), 
     .A(dataram_dataout[31:0]), 
     .B(dataram_dataout[63:32]), 
@@ -132,7 +132,7 @@ input [`WORD-1:0] write_data; // the data from the processor
 output reg [`CACHE_LINE_BIT_LENGTH-1:0] cache_line_data;
 output reg [`CACHE_LINE_SIZE-1:0] cache_line_strb;
 
-wire mask = {8{p_w_en[3]}, 8{p_w_en[2]}, 8{p_w_en[1]}, 8{p_w_en[0]}};
+wire mask = {{8{p_w_en[3]}}, {8{p_w_en[2]}}, {8{p_w_en[1]}}, {8{p_w_en[0]}}};
 
 // generate cache_line_data & cache_line_strb
 always@(*)begin
@@ -154,18 +154,18 @@ always@(*)begin
         cache_line_strb = {p_w_en, 4'h0, 4'h0, 4'h0};
     end
     default: begin
-        cache_line_data = `CACHE_LINE_BIT_LENGTH'h0;
+        cache_line_data = 128'h0;
         cache_line_strb = 16'h0;
     end
     endcase
 end
 endmodule
 
+
 module Cache_Controller(clk, rst, p_w_en, p_r_en, hit, //input
-                        readAddr_ready, readData_valid, writeAddr_ready, writeData_ready, writeResp_valid,
+                        readAddr_ready, readData_valid, writeAddr_ready, writeData_ready, writeResp_valid, writeResp_msg,
                         readAddr_valid, readData_ready, writeAddr_valid, writeData_valid, writeResp_ready, //output
-                        dataram_sel, p_ready, w_tagram, w_validram, w_dataram, validin
-                        );
+                        dataram_sel, p_ready, w_tagram, w_validram, w_dataram, validin);
 input clk, rst;
 input [3:0] p_w_en; // w_en from the processor
 input p_r_en;       // r_en from the processor
@@ -211,7 +211,7 @@ wire write = |p_w_en;
 wire read  = p_r_en;
 
 // Update StateReg
-always@(posedge clk) begin
+always@(posedge clk or posedge rst) begin
     if(rst) StateReg <= S_IDLE;
     else    StateReg <= NextState;
 end
@@ -221,21 +221,21 @@ always@(*) begin
     case (StateReg)
     S_IDLE       : begin
         case ({read, write, hit})
-        3'b101 : NextState <= S_READ_HIT;   // read hit
-        3'b100 : NextState <= S_READ_MISS;  // read miss
-        3'b011 : NextState <= S_WRITE_HIT;  // write hit
-        3'b010 : NextState <= S_WRITE_MISS; // write miss
-        default: NextState <= S_IDLE;      // default
+        3'b101 : NextState = S_READ_HIT;   // read hit
+        3'b100 : NextState = S_READ_MISS;  // read miss
+        3'b011 : NextState = S_WRITE_HIT;  // write hit
+        3'b010 : NextState = S_WRITE_MISS; // write miss
+        default: NextState = S_IDLE;      // default
         endcase
     end
-    S_READ_HIT           : NextState <= S_IDLE;
-    S_READ_MISS          : NextState <= (readAddr_ready)? S_READ_SYS_UPD_CACHE : S_READ_MISS;
-    S_READ_SYS_UPD_CACHE : NextState <= (readData_valid)? S_IDLE : S_READ_SYS_UPD_CACHE;
-    S_WRITE_HIT          : NextState <= (writeAddr_ready & writeData_ready)? S_WRITE_SYS_UPD_CACHE : S_WRITE_HIT;
-    S_WRITE_SYS_UPD_CACHE: NextState <= (writeResp_valid)? S_IDLE : S_WRITE_SYS_UPD_CACHE;
-    S_WRITE_MISS         : NextState <= (writeAddr_ready & writeData_ready)? S_WRITE_SYS : S_WRITE_MISS;
-    S_WRITE_SYS          : NextState <= (writeResp_valid)? S_IDLE : S_WRITE_SYS;
-    default              : NextState <= S_IDLE;
+    S_READ_HIT           : NextState = S_IDLE;
+    S_READ_MISS          : NextState = (readAddr_ready == 1'b1)? S_READ_SYS_UPD_CACHE : S_READ_MISS;
+    S_READ_SYS_UPD_CACHE : NextState = (readData_valid == 1'b1)? S_IDLE : S_READ_SYS_UPD_CACHE;
+    S_WRITE_HIT          : NextState = ((writeAddr_ready & writeData_ready) == 1'b1)? S_WRITE_SYS_UPD_CACHE : S_WRITE_HIT;
+    S_WRITE_SYS_UPD_CACHE: NextState = (writeResp_valid == 1'b1)? S_IDLE : S_WRITE_SYS_UPD_CACHE;
+    S_WRITE_MISS         : NextState = ((writeAddr_ready & writeData_ready) == 1'b1)? S_WRITE_SYS : S_WRITE_MISS;
+    S_WRITE_SYS          : NextState = (writeResp_valid == 1'b1)? S_IDLE : S_WRITE_SYS;
+    default              : NextState = S_IDLE;
     endcase
 end
 
@@ -402,7 +402,6 @@ endmodule
 
 /*Arch.
 little endian for each of the cache lines.
-
 | WORD 3 | WORD 2 | WORD 1 | WORD 0 | 
 + ------ + ------ + ------ + ------ +
 |        |        |        |        | ---> CACHE LINE #0
@@ -417,7 +416,6 @@ little endian for each of the cache lines.
 +--------+--------+--------+--------+
 |        |        |        |        | ---> CACHE LINE #15
 +--------+--------+--------+--------+
-
 */
 
 module DataRam(clk, rst, w_en, Index, DataIn, DataStrb, DataOut);
@@ -447,10 +445,10 @@ assign word_wen[2] = |DataStrb[11:8];
 assign word_wen[3] = |DataStrb[15:12];
 
 // generate the mask 
-assign mask0 = {8{DataStrb[3]}, 8{DataStrb[2]}, 8{DataStrb[1]}, 8{DataStrb[0]}};
-assign mask1 = {8{DataStrb[7]}, 8{DataStrb[6]}, 8{DataStrb[5]}, 8{DataStrb[4]}};
-assign mask2 = {8{DataStrb[11]}, 8{DataStrb[10]}, 8{DataStrb[9]}, 8{DataStrb[8]}};
-assign mask3 = {8{DataStrb[15]}, 8{DataStrb[14]}, 8{DataStrb[13]}, 8{DataStrb[12]}};
+assign mask0 = {{8{DataStrb[3]}}, {8{DataStrb[2]}}, {8{DataStrb[1]}}, {8{DataStrb[0]}}};
+assign mask1 = {{8{DataStrb[7]}}, {8{DataStrb[6]}}, {8{DataStrb[5]}}, {8{DataStrb[4]}}};
+assign mask2 = {{8{DataStrb[11]}}, {8{DataStrb[10]}}, {8{DataStrb[9]}}, {8{DataStrb[8]}}};
+assign mask3 = {{8{DataStrb[15]}}, {8{DataStrb[14]}}, {8{DataStrb[13]}}, {8{DataStrb[12]}}};
 
 // generate the value we want to write into cache line
 assign DataIn_Word0 = (DataMEM[{Index, 2'b00}] & (~mask0)) | (DataIn[31:0] & mask0);
@@ -462,7 +460,7 @@ assign DataIn_Word3 = (DataMEM[{Index, 2'b11}] & (~mask3)) | (DataIn[127:96] & m
 assign DataOut = {DataMEM[{Index, 2'b11}], DataMEM[{Index, 2'b10}], DataMEM[{Index, 2'b01}], DataMEM[{Index, 2'b00}]};
 
 // Write a cache line
-always @ (posedge clk) begin
+always @ (posedge clk or posedge rst) begin
     if (rst)
         for(i=0; i<`REG_NUM; i=i+1)
             DataMEM[i] <= `WORD'h0000_0000;
@@ -498,7 +496,7 @@ module TagRam(clk, rst, w_en, Index, TagIn, TagOut);
     assign TagOut = TagMEM[Index];
 
     //Update tags
-    always@(posedge clk) begin
+    always@(posedge clk or posedge rst) begin
         if(rst) 
             for(i=0; i<`CACHE_LINE_NUM; i=i+1)
                 TagMEM[i] <= `TAG_LENGTH'b0;
@@ -516,7 +514,7 @@ module ValidRam(clk, rst, w_en, Index, ValidIn, ValidOut);
     input clk, rst, w_en;
     input [`INDEX_LENGTH-1:0] Index;
     input ValidIn;
-    output ValidOut;
+    output wire ValidOut;
     
     integer i;
     reg [`CACHE_LINE_NUM-1:0] ValidMEM;
@@ -525,7 +523,7 @@ module ValidRam(clk, rst, w_en, Index, ValidIn, ValidOut);
     assign ValidOut = ValidMEM[Index];
 
     //Update tags
-    always@(posedge clk) begin
+    always@(posedge clk or posedge rst) begin
         if(rst) begin
             ValidMEM <= `CACHE_LINE_NUM'h0000;
         end
