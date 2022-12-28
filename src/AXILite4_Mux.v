@@ -14,7 +14,7 @@ module Arbiter (
 
 assign chosen = (rst) ? 0 :
                 (~next) ? chosen :
-                (candidate_bitmap[~chosen]) ? ~chosen : chosen;
+                (candidate_bitmap[~chosen] == 1) ? ~chosen : chosen;
 
 endmodule
 
@@ -156,15 +156,15 @@ always @(posedge clk or posedge rst) begin
     else begin
         case (read_state)
             sINIT: begin
-                read_state <= (master_readAddr_valid[read_arbitrate_result]) ? sREAD_REQ : sINIT;
+                read_state <= (master_readAddr_valid[read_arbitrate_result]  == 1) ? sREAD_REQ : sINIT;
                 read_current_master <= read_arbitrate_result;
             end
             sREAD_REQ: begin
-                read_state <= (master_readAddr_valid[read_current_master] & slave_readAddr_ready) ? sREAD_RESP : sREAD_REQ;
+                read_state <= ((master_readAddr_valid[read_current_master] & slave_readAddr_ready) == 1) ? sREAD_RESP : sREAD_REQ;
                 read_current_master <= read_current_master;
             end
             sREAD_RESP: begin
-                read_state <= (slave_readData_valid & master_readData_ready[read_current_master]) ? sINIT : sREAD_RESP;
+                read_state <= ((slave_readData_valid & master_readData_ready[read_current_master]) == 1) ? sINIT : sREAD_RESP;
                 read_current_master <= read_current_master;
             end
             default: begin
@@ -184,15 +184,15 @@ always @(posedge clk or posedge rst) begin
     else begin
         case (write_state)
             sINIT: begin
-                write_state <= (master_writeAddr_valid[write_current_master] & master_writeData_valid[write_arbitrate_result]) ? sWRITE_REQ : sINIT;
+                write_state <= ((master_writeAddr_valid[write_current_master] & master_writeData_valid[write_arbitrate_result] ) == 1) ? sWRITE_REQ : sINIT;
                 write_current_master <= write_arbitrate_result;
             end
             sWRITE_REQ: begin
-                write_state <= (master_writeAddr_valid[write_current_master] & master_writeData_valid[write_current_master] & slave_writeAddr_ready & slave_writeData_ready) ? sWRITE_RESP : sWRITE_REQ;
+                write_state <= ((master_writeAddr_valid[write_current_master] & master_writeData_valid[write_current_master] & slave_writeAddr_ready  & slave_writeData_ready)  == 1) ? sWRITE_RESP : sWRITE_REQ;
                 write_current_master <= write_current_master;
             end
             sWRITE_RESP: begin
-                write_state <= (slave_writeResp_valid & master_writeResp_ready[write_current_master]) ? sINIT : sWRITE_RESP;
+                write_state <= ((slave_writeResp_valid & master_writeResp_ready[write_current_master] ) == 1) ? sINIT : sWRITE_RESP;
                 write_current_master <= write_current_master;
             end
             default: begin
@@ -209,13 +209,13 @@ assign write_next_arbitrate = (write_state == sINIT);
 
 // signal generator - read bus
 assign master_1_readAddr_ready = (read_state == sREAD_REQ & read_current_master == 0) ? slave_readAddr_ready : FALSE;
-assign master_1_readData_data = (read_state == sREAD_RESP & read_current_master == 0) ? slave_readData_data : 128'bx;
+assign master_1_readData_data = (read_state == sREAD_RESP & read_current_master == 0) ? slave_readData_data : 128'b0;
 assign master_1_readData_valid = (read_state == sREAD_RESP & read_current_master == 0) ? slave_readData_valid : FALSE;
 assign master_2_readAddr_ready = (read_state == sREAD_REQ & read_current_master == 1) ? slave_readAddr_ready : FALSE;
-assign master_2_readData_data = (read_state == sREAD_RESP & read_current_master == 1) ? slave_readData_data : 128'bx;
+assign master_2_readData_data = (read_state == sREAD_RESP & read_current_master == 1) ? slave_readData_data : 128'b0;
 assign master_2_readData_valid = (read_state == sREAD_RESP & read_current_master == 1) ? slave_readData_valid : FALSE;
 assign slave_readAddr_addr = (read_state == sREAD_REQ & read_current_master == 0) ? master_1_readAddr_addr :
-                             (read_state == sREAD_REQ & read_current_master == 1) ? master_2_readAddr_addr : 32'bx;
+                             (read_state == sREAD_REQ & read_current_master == 1) ? master_2_readAddr_addr : 32'b0;
 assign slave_readAddr_valid = (read_state == sREAD_REQ & read_current_master == 0) ? master_1_readAddr_valid :
                               (read_state == sREAD_REQ & read_current_master == 1) ? master_2_readAddr_valid : FALSE;
 assign slave_readData_ready = (read_state == sREAD_RESP & read_current_master == 0) ? master_1_readData_ready :
@@ -224,20 +224,20 @@ assign slave_readData_ready = (read_state == sREAD_RESP & read_current_master ==
 // signal generator - write bus
 assign master_1_writeAddr_ready = (write_state == sWRITE_REQ & write_current_master == 0) ? slave_writeAddr_ready : FALSE;
 assign master_1_writeData_ready = (write_state == sWRITE_REQ & write_current_master == 0) ? slave_writeData_ready : FALSE;
-assign master_1_writeResp_msg = (write_state == sWRITE_RESP & write_current_master == 0) ? slave_writeResp_msg : 32'bx;
+assign master_1_writeResp_msg = (write_state == sWRITE_RESP & write_current_master == 0) ? slave_writeResp_msg : 32'b0;
 assign master_1_writeResp_valid = (write_state == sWRITE_RESP & write_current_master == 0) ? slave_writeResp_valid : FALSE;
 assign master_2_writeAddr_ready = (write_state == sWRITE_REQ & write_current_master == 1) ? slave_writeAddr_ready : FALSE;
 assign master_2_writeData_ready = (write_state == sWRITE_REQ & write_current_master == 1) ? slave_writeData_ready : FALSE;
-assign master_2_writeResp_msg = (write_state == sWRITE_RESP & write_current_master == 1) ? slave_writeResp_msg : 32'bx;
+assign master_2_writeResp_msg = (write_state == sWRITE_RESP & write_current_master == 1) ? slave_writeResp_msg : 32'b0;
 assign master_2_writeResp_valid = (write_state == sWRITE_RESP & write_current_master == 1) ? slave_writeResp_valid : FALSE;
 assign slave_writeAddr_addr = (write_state == sWRITE_REQ & write_current_master == 0) ? master_1_writeAddr_addr :
-                              (write_state == sWRITE_REQ & write_current_master == 1) ? master_2_writeAddr_addr : 32'bx;
+                              (write_state == sWRITE_REQ & write_current_master == 1) ? master_2_writeAddr_addr : 32'b0;
 assign slave_writeAddr_valid = (write_state == sWRITE_REQ & write_current_master == 0) ? master_1_writeAddr_valid :
                                (write_state == sWRITE_REQ & write_current_master == 1) ? master_2_writeAddr_valid : FALSE;
 assign slave_writeData_data = (write_state == sWRITE_REQ & write_current_master == 0) ? master_1_writeData_data :
-                              (write_state == sWRITE_REQ & write_current_master == 1) ? master_2_writeData_data : 128'bx;
+                              (write_state == sWRITE_REQ & write_current_master == 1) ? master_2_writeData_data : 128'b0;
 assign slave_writeData_strb = (write_state == sWRITE_REQ & write_current_master == 0) ? master_1_writeData_strb :
-                              (write_state == sWRITE_REQ & write_current_master == 1) ? master_2_writeData_strb : 16'bx;
+                              (write_state == sWRITE_REQ & write_current_master == 1) ? master_2_writeData_strb : 16'b0;
 assign slave_writeData_valid = (write_state == sWRITE_REQ & write_current_master == 0) ? master_1_writeData_valid :
                                (write_state == sWRITE_REQ & write_current_master == 1) ? master_2_writeData_valid : FALSE;
 assign slave_writeResp_ready = (write_state == sWRITE_RESP & write_current_master == 0) ? master_1_writeResp_ready :
