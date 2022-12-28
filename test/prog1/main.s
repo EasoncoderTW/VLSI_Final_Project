@@ -8,7 +8,6 @@ TEST3_SIZE: .word 27
 _answer: .word 0
 
 .text
-.globl main
 
 main:
     addi  sp, sp ,-4
@@ -123,6 +122,10 @@ main_exit:
     
     # halt the cpu
     hcf
+    hcf
+    hcf
+    hcf
+    hcf
     
 #------------------------#
 #   Function mergesort   #
@@ -208,7 +211,7 @@ mergesort:
     addi  sp, sp, 12
     
 mergesort_ret:
-    jalr x0, ra
+    jalr x0, 0(ra)
 
 #--------------------#
 #   Function merge   #
@@ -232,7 +235,8 @@ merge:
     add   t1, sp, x0
     
     ### for(int i = 0; i< temp_size;i++)
-    li    t2, 0    # t2: int i
+    li    t2, 0    
+    # t2: int i
     bge   t2, t0, for_loop_1_end
 for_loop_1:
     add   t3, t2, a1    
@@ -294,7 +298,8 @@ while_loop_1:
     lw    t4, 0(t2)
     slli  t2, s4, 2         
     # @arr[arr_index] -> t2
-    add   t2, t2, a0        # word
+    add   t2, t2, a0        
+    # word
     blt   t4, t3, else_1
 if_1:      
     sw    t3, 0(t2)        
@@ -372,7 +377,7 @@ while_loop_3_end:
     add   sp ,sp, t1    
     # @sp = @sp + temp_size
     
-    jalr x0, ra
+    jalr x0, 0(ra)
 
     
     
