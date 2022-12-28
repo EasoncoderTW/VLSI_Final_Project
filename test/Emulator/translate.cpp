@@ -60,14 +60,10 @@ void write_data_hex(uint8_t *mem, FILE *data_file)
 {
 	uint8_t ret = 0;
 
-	for (int i = 0; i < (1 << 10); i+=4)
+	for (int i = 0; i < (1 << 10); i++)
 	{ // 1kB for DataMem
-		for(int j = 3; j>=0; j--)
-		{
-			ret = (uint8_t)mem_read(mem, i + j + DATA_OFFSET, LBU);
-			if(j > 0)fprintf(data_file, "%02x", ret);
-			else fprintf(data_file, "%02x\n", ret);
-		}
+		ret = (uint8_t)mem_read(mem, i + DATA_OFFSET, LBU);
+		fprintf(data_file, "%02x\n", ret);
 	}
 }
 
@@ -706,10 +702,10 @@ void translate_to_machine_code(uint8_t *mem, instr *imem, char *argv1)
 		if (i.psrc)
 			fprintf(inst_file, "%s\n", i.psrc);
 
-		fprintf(mch_file, "%02x", (binary >> 24) & 0xff);
-		fprintf(mch_file, "%02x", (binary >> 16) & 0xff);
-		fprintf(mch_file, "%02x", (binary >> 8) & 0xff);
 		fprintf(mch_file, "%02x\n", (binary >> 0) & 0xff);
+		fprintf(mch_file, "%02x\n", (binary >> 8) & 0xff);
+		fprintf(mch_file, "%02x\n", (binary >> 16) & 0xff);
+		fprintf(mch_file, "%02x\n", (binary >> 24) & 0xff);
 
 		inst_cnt++;
 	}
