@@ -1,11 +1,4 @@
-`define I_type_inst_1   5'b00100
-`define I_type_inst_2   5'b00000
-`define I_type_inst_3   5'b11001
-`define S_type_inst     5'b01000
-`define B_type_inst     5'b11000
-`define U_type_inst_1   5'b00101
-`define U_type_inst_2   5'b01101
-`define J_type_inst     5'b11011
+`include "rv32_define.v"
 
 module Imm_Ext (
     input [31:0] inst,
