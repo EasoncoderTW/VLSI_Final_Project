@@ -1,3 +1,5 @@
+`include "rv32_define.v"
+
 module Controller (
     input clk,
     input rst,
@@ -12,7 +14,7 @@ module Controller (
     input inst_cache_ready, // new
     input data_cache_ready, // new
 
-    output wire data_hazar_stall, // modified
+    output wire data_hazard_stall, // modified
     output wire data_mem_stall, // new
     output wire inst_mem_stall, // new
     output wire halt, // new
@@ -42,22 +44,7 @@ module Controller (
     output wire [2:0]W_f3,
     output wire W_wb_data_sel
 );
-// opcode
-`define lui_    5'b01101
-`define auipc_  5'b00101
-`define load_   5'b00000
-`define store_  5'b01000
-`define jal_    5'b11011
-`define jalr_   5'b11001
-`define branch_   5'b11000
-`define I_type_   5'b00100
-`define R_type_   5'b01100
-`define HCF    5'b00010  // new halt for cpu
 
-//store func3
-`define sb_ 3'b000
-`define sh_ 3'b001
-`define sw_ 3'b010
 
 //reg
 
@@ -128,12 +115,12 @@ assign is_E_use_rs2 = (E_op_reg == `R_type_)? 1'b1:
                             (E_op_reg == `store_)? 1'b1:
                             (E_op_reg == `branch_)? 1'b1:1'b0;
 
-// data_hazar_stall
+// data_hazard_stall
 wire is_DE_overlap;
 wire is_D_rs1_E_rd_overlap;
 wire is_D_rs2_E_rd_overlap;
 
-assign data_hazar_stall = (E_op_reg == `load_) & is_DE_overlap;
+assign data_hazard_stall = (E_op_reg == `load_) & is_DE_overlap;
 assign is_DE_overlap = (is_D_rs1_E_rd_overlap | is_D_rs2_E_rd_overlap);
 assign is_D_rs1_E_rd_overlap = is_D_use_rs1 & (rs1_index == E_rd_reg) & E_rd_reg != 0;
 assign is_D_rs2_E_rd_overlap = is_D_use_rs2 & (rs2_index == E_rd_reg) & E_rd_reg != 0;
@@ -209,12 +196,12 @@ always @(posedge clk or posedge rst) begin
         E_f7_reg <= 1'd0;
     end
     else begin
-        E_op_reg <= (data_hazar_stall)? 5'd0:((data_mem_stall)?E_op_reg:((next_pc_sel)?5'd0:opcode));
-        E_f3_reg <= (data_hazar_stall)? 3'd0:((data_mem_stall)?E_f3_reg:((next_pc_sel)?3'd0:func3));
-        E_rd_reg <= (data_hazar_stall)? 5'd0:((data_mem_stall)?E_rd_reg:((next_pc_sel)?5'd0:rd_index));
-        E_rs1_reg <= (data_hazar_stall)? 5'd0:((data_mem_stall)?E_rs1_reg:((next_pc_sel)?5'd0:rs1_index));
-        E_rs2_reg <= (data_hazar_stall)? 5'd0:((data_mem_stall)?E_rs2_reg:((next_pc_sel)?5'd0:rs2_index));
-        E_f7_reg <= (data_hazar_stall)? 1'd0:((data_mem_stall)?E_f7_reg:((next_pc_sel)?1'd0:func7));
+        E_op_reg <= (data_hazard_stall)? 5'd0:((data_mem_stall)?E_op_reg:((next_pc_sel)?5'd0:opcode));
+        E_f3_reg <= (data_hazard_stall)? 3'd0:((data_mem_stall)?E_f3_reg:((next_pc_sel)?3'd0:func3));
+        E_rd_reg <= (data_hazard_stall)? 5'd0:((data_mem_stall)?E_rd_reg:((next_pc_sel)?5'd0:rd_index));
+        E_rs1_reg <= (data_hazard_stall)? 5'd0:((data_mem_stall)?E_rs1_reg:((next_pc_sel)?5'd0:rs1_index));
+        E_rs2_reg <= (data_hazard_stall)? 5'd0:((data_mem_stall)?E_rs2_reg:((next_pc_sel)?5'd0:rs2_index));
+        E_f7_reg <= (data_hazard_stall)? 1'd0:((data_mem_stall)?E_f7_reg:((next_pc_sel)?1'd0:func7));
         
         M_op_reg <= (data_mem_stall)?M_op_reg:E_op_reg;
         M_f3_reg <= (data_mem_stall)?M_f3_reg:E_f3_reg;
