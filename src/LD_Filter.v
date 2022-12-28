@@ -1,8 +1,4 @@
-`define lb_     3'b000
-`define lh_     3'b001
-`define lw_     3'b010
-`define lbu_    3'b100
-`define lhu_    3'b101
+`include "./rv32_define.v"
 
 module LD_Filter (
     input [2:0] func3,
