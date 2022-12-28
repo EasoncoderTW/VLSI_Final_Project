@@ -20,44 +20,44 @@ module CPU(
     // Inst Cache - AXI Lite 4 master IO
         // read port
     output  [31:0]       Inst_Cahe_readAddr_addr,
-    output               Inst_Cahe_readAddr_valid,
+    output  wire         Inst_Cahe_readAddr_valid,
     input                Inst_Cahe_readAddr_ready,
     input   [127:0]      Inst_Cahe_readData_data,
     input                Inst_Cahe_readData_valid,
-    output               Inst_Cahe_readData_ready,
+    output  wire         Inst_Cahe_readData_ready,
         // write port
     output  [31:0]       Inst_Cahe_writeAddr_addr,
-    output               Inst_Cahe_writeAddr_valid,
+    output  wire         Inst_Cahe_writeAddr_valid,
     input                Inst_Cahe_writeAddr_ready,
     output  [127:0]      Inst_Cahe_writeData_data,
     output  [15:0]       Inst_Cahe_writeData_strb,
-    output               Inst_Cahe_writeData_valid,
+    output  wire         Inst_Cahe_writeData_valid,
     input                Inst_Cahe_writeData_ready,
     input   [31:0]       Inst_Cahe_writeResp_msg,
     input                Inst_Cahe_writeResp_valid,
-    output               Inst_Cahe_writeResp_ready,
+    output  wire         Inst_Cahe_writeResp_ready,
 
     // Data Cache - AXI Lite 4 master IO
         // read port
     output  [31:0]       Data_Cahe_readAddr_addr,
-    output               Data_Cahe_readAddr_valid,
+    output  wire         Data_Cahe_readAddr_valid,
     input                Data_Cahe_readAddr_ready,
     input   [127:0]      Data_Cahe_readData_data,
     input                Data_Cahe_readData_valid,
-    output               Data_Cahe_readData_ready,
+    output  wire         Data_Cahe_readData_ready,
         // write port
     output  [31:0]       Data_Cahe_writeAddr_addr,
-    output               Data_Cahe_writeAddr_valid,
+    output  wire         Data_Cahe_writeAddr_valid,
     input                Data_Cahe_writeAddr_ready,
     output  [127:0]      Data_Cahe_writeData_data,
     output  [15:0]       Data_Cahe_writeData_strb,
-    output               Data_Cahe_writeData_valid,
+    output  wire         Data_Cahe_writeData_valid,
     input                Data_Cahe_writeData_ready,
     input   [31:0]       Data_Cahe_writeResp_msg,
     input                Data_Cahe_writeResp_valid,
-    output               Data_Cahe_writeResp_ready,
+    output  wire         Data_Cahe_writeResp_ready,
     // halt
-    output  halt
+    output wire halt
 );
 
 wire [3:0] F_im_w_en;
@@ -73,12 +73,11 @@ wire data_mem_stall;
 wire inst_mem_stall;
 wire inst_cache_ready;
 wire data_cache_ready;
-wire halt;
 
 Reg_PC pc(
     .clk(clk),
     .rst(rst),
-    .stall(stall|inst_mem_stall|data_mem_stall|halt),
+    .stall(inst_mem_stall|data_mem_stall|halt),
     .next_pc(pc_next),
     .current_pc(pc_now)
 );
@@ -193,6 +192,7 @@ Controller controller(
     .data_cache_ready(data_cache_ready),
     .data_hazard_stall(data_hazard_stall),
     .halt(halt),
+    .F_im_r_en(F_im_r_en),
     .data_mem_stall(data_mem_stall),
     .inst_mem_stall(inst_mem_stall),
     .next_pc_sel(next_pc_sel),  
@@ -370,7 +370,8 @@ Cache data_cache(
     .writeData_valid(Data_Cahe_writeData_valid),
     .writeData_ready(Data_Cahe_writeData_ready),
     .writeResp_msg(Data_Cahe_writeResp_msg),
-    .writeResp_valid(Data_Cahe_writeResp_valid)
+    .writeResp_valid(Data_Cahe_writeResp_valid),
+    .writeResp_ready(Data_Cahe_writeResp_ready)	
 );
 //===================================================================================
 
