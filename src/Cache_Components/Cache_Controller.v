@@ -1,3 +1,4 @@
+`include "./Cache_Components/Cache_define_macro.v"
 module Cache_Controller(clk, rst, p_w_en, p_r_en, hit, //input
                         readAddr_ready, readData_valid, writeAddr_ready, writeData_ready, writeResp_valid, writeResp_msg,
                         readAddr_valid, readData_ready, writeAddr_valid, writeData_valid, writeResp_ready, //output
