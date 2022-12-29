@@ -1,18 +1,18 @@
-`include "Adder.v"
-`include "ALU.v"
-`include "Cache.v"
-`include "Controller.v"
-`include "Decoder.v"
-`include "Imme_Ext.v"
-`include "JB_Unit.v"
-`include "LD_Filter.v"
-`include "Mux.v"
-`include "Reg_D.v"
-`include "Reg_E.v"
-`include "Reg_M.v"
-`include "Reg_PC.v"
-`include "Reg_W.v"
-`include "RegFile.v"
+`include "./CPU_Components/Adder.v"
+`include "./CPU_Components/ALU.v"
+`include "./Cache.v"
+`include "./CPU_Components/Controller.v"
+`include "./CPU_Components/Decoder.v"
+`include "./CPU_Components/Imme_Ext.v"
+`include "./CPU_Components/JB_Unit.v"
+`include "./CPU_Components/LD_Filter.v"
+`include "./CPU_Components/Mux.v"
+`include "./CPU_Components/Reg_D.v"
+`include "./CPU_Components/Reg_E.v"
+`include "./CPU_Components/Reg_M.v"
+`include "./CPU_Components/Reg_PC.v"
+`include "./CPU_Components/Reg_W.v"
+`include "./CPU_Components/RegFile.v"
 
 module CPU(
     input clk,
@@ -262,7 +262,7 @@ wire [31:0] reg_e_sext_imme;
 Reg_E reg_e( 
     .clk(clk),
     .rst(rst),
-    .stall(data_hazard_stall|data_mem_stall|halt),
+    .stall(data_hazard_stall|data_mem_stall|inst_mem_stall|halt),
     .flush(flush),
     .pc_in(reg_d_pc), 
     .rs1_data_in(mux_d_rs1_data_out), 
@@ -337,7 +337,7 @@ wire [31:0] reg_m_rs2_data_out;
 Reg_M reg_m( 
     .clk(clk),
     .rst(rst),
-    .stall(data_mem_stall|halt),
+    .stall(data_mem_stall|inst_mem_stall|halt),
     .alu_out_in(alu_out), 
     .rs2_data_in(mux_e_rs2_data_out), 
     .alu_out_out(reg_m_alu_out_out), 
