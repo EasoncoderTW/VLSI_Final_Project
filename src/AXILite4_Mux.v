@@ -9,18 +9,21 @@ module Arbiter (
     input rst,
     input next,
     input [1:0] candidate_bitmap,
-    output reg chosen
+    output chosen
 );
 
+reg last_chosen;
+
 always @(posedge clk or posedge rst) begin
-    if (rst) chosen <= 0;
-    else begin
-        if (~next) chosen <= chosen;
-        else if (chosen == 0 & candidate_bitmap[1]) chosen <= 1;
-        else if (chosen == 1 & candidate_bitmap[0]) chosen <= 0;
-        else chosen <= chosen;
-    end
+    if (rst) last_chosen <= 1;
+    else last_chosen <= chosen;
 end
+
+assign chosen = (rst) ? 1 :
+                (~next) ? last_chosen :
+                (last_chosen == 0 & candidate_bitmap[1]) ? 1 :
+                (last_chosen == 1 & candidate_bitmap[0]) ? 0 :
+                last_chosen;
 
 endmodule
 
