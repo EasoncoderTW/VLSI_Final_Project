@@ -1,4 +1,4 @@
-
+`include "./Cache_Components/Cache_define_macro.v"
 /*Arch.
 little endian for each of the cache lines.
 | WORD 3 | WORD 2 | WORD 1 | WORD 0 | 

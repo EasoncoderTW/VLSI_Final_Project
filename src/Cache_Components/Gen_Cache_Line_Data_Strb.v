@@ -1,3 +1,4 @@
+`include "./Cache_Components/Cache_define_macro.v"
 module Gen_Cache_Line_Data_Strb(p_w_en, offset, write_data, cache_line_data, cache_line_strb);
 input [3:0] p_w_en; // the write mask from the processor 
 input [1:0] offset; // indicate the write_data's location in a cache line

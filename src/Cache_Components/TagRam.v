@@ -1,3 +1,4 @@
+`include "./Cache_Components/Cache_define_macro.v"
 module TagRam(clk, rst, w_en, Index, TagIn, TagOut);
     input clk, rst, w_en;
     input [`INDEX_LENGTH-1:0] Index;

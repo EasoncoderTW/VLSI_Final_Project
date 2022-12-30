@@ -1,3 +1,4 @@
+`include "./Cache_Components/Cache_define_macro.v"
 module ValidRam(clk, rst, w_en, Index, ValidIn, ValidOut);
     input clk, rst, w_en;
     input [`INDEX_LENGTH-1:0] Index;
