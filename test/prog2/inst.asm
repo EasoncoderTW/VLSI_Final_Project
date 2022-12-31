@@ -124,11 +124,4 @@ lui t1, 777
 addi t6, t6, 4
 sw t1, 0(t6)
 auipc t2, 777
-addi t6, t6, 4
-sw t2, 0(t6)
-bgeu t2, t1, go_back
-lw s0, 0(sp)
-lw ra, 4(sp)
-addi sp, sp, 4
-jal halt
 hcf
