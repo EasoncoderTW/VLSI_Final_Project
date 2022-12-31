@@ -426,6 +426,10 @@ void append_source(const char *op, const char *a1, const char *a2, const char *a
 	{
 		sprintf(tbuf, "%s %s, %s, %s", op, a1, a2, a3);
 	}
+	else if (op)
+	{
+		sprintf(tbuf, "%s", op);
+	} 
 	else
 	{
 		return;

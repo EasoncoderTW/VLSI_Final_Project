@@ -1,0 +1,195 @@
+00008137   lui x02, 0x00000008
+00010113   addi x02, x02, 0x00000000
+ffc10113   addi sp, sp, -4
+00812023   sw s0, 0(sp)
+00008437   lui x08, 0x00000008
+13440413   addi x08, x08, 0x00000134
+ff010113   addi sp, sp, -16
+00812623   sw s0, 12(sp)
+00912423   sw s1, 8(sp)
+01212223   sw s2, 4(sp)
+01312023   sw s3, 0(sp)
+000009b7   lui x19, 0x00000000
+00198993   addi x19, x19, 0x00000001
+00008437   lui x08, 0x00000008
+00040413   addi x08, x08, 0x00000000
+000084b7   lui x09, 0x00000008
+12848493   addi x09, x09, 0x00000128
+00009937   lui x18, 0x00000009
+00090913   addi x18, x18, 0x00000000
+0880006f   j x0, copy_data
+000009b7   lui x19, 0x00000000
+00298993   addi x19, x19, 0x00000002
+00008437   lui x08, 0x00000008
+08040413   addi x08, x08, 0x00000080
+000084b7   lui x09, 0x00000008
+12c48493   addi x09, x09, 0x0000012c
+00009937   lui x18, 0x00000009
+00090913   addi x18, x18, 0x00000000
+000082b7   lui x05, 0x00000008
+12828293   addi x05, x05, 0x00000128
+0002a303   lw t1, 0(t0)
+00231313   slli t1, t1, 2
+00690933   add s2, s2, t1
+0500006f   j x0, copy_data
+000009b7   lui x19, 0x00000000
+00398993   addi x19, x19, 0x00000003
+00008437   lui x08, 0x00000008
+0bc40413   addi x08, x08, 0x000000bc
+000084b7   lui x09, 0x00000008
+13048493   addi x09, x09, 0x00000130
+00009937   lui x18, 0x00000009
+00090913   addi x18, x18, 0x00000000
+000082b7   lui x05, 0x00000008
+12828293   addi x05, x05, 0x00000128
+0002a303   lw t1, 0(t0)
+00231313   slli t1, t1, 2
+00690933   add s2, s2, t1
+000082b7   lui x05, 0x00000008
+12c28293   addi x05, x05, 0x0000012c
+0002a303   lw t1, 0(t0)
+00231313   slli t1, t1, 2
+00690933   add s2, s2, t1
+0040006f   j x0, copy_data
+000002b7   lui x05, 0x00000000
+00028293   addi x05, x05, 0x00000000
+0004ae03   lw t3, 0(s1)
+002e1e13   slli t3, t3, 2
+00828333   add t1, t0, s0
+00032383   lw t2, 0(t1)
+01228333   add t1, t0, s2
+00732023   sw t2, 0(t1)
+00428293   addi t0, t0, 4
+ffc2c6e3   blt t0, t3, copy_loop
+00090533   add a0, s2, x0
+000005b7   lui x11, 0x00000000
+00058593   addi x11, x11, 0x00000000
+0004a603   lw a2, 0(s1)
+fff60613   addi a2, a2, -1
+ffc10113   addi sp, sp, -4
+00112023   sw ra, 0(sp)
+04c000ef   jal ra, mergesort
+00012083   lw ra, 0(sp)
+00410113   addi sp, sp, 4
+fff98993   addi s3, s3, -1
+f20984e3   beq s3, x0, load_test_2
+fff98993   addi s3, s3, -1
+f4098ce3   beq s3, x0, load_test_3
+00c12403   lw s0, 12(sp)
+00812483   lw s1, 8(sp)
+00412903   lw s2, 4(sp)
+00012983   lw s3, 0(sp)
+01010113   addi sp, sp, 16
+00012403   lw s0, 0(sp)
+00410113   addi sp, sp, 4
+0000000b   hcf
+0000000b   hcf
+0000000b   hcf
+0000000b   hcf
+0000000b   hcf
+06c5d663   bge a1, a2, mergesort_ret
+ff410113   addi sp, sp, -12
+00812423   sw s0, 8(sp)
+00912223   sw s1, 4(sp)
+01212023   sw s2, 0(sp)
+000584b3   add s1, a1, x0
+00060933   add s2, a2, x0
+00c58433   add s0, a1, a2
+40145413   srai s0, s0, 1
+ffc10113   addi sp, sp, -4
+00112023   sw ra, 0(sp)
+000485b3   add a1, s1, x0
+00040633   add a2, s0, x0
+fcdff16f   jal ra, mergesort
+00140593   addi a1, s0, 1
+00090633   add a2, s2, x0
+fc1ff16f   jal ra, mergesort
+000485b3   add a1, s1, x0
+00040633   add a2, s0, x0
+000906b3   add a3, s2, x0
+020000ef   jal ra, merge
+00012083   lw ra, 0(sp)
+00410113   addi sp, sp, 4
+00812403   lw s0, 8(sp)
+00412483   lw s1, 4(sp)
+00012903   lw s2, 0(sp)
+00c10113   addi sp, sp, 12
+00008067   jalr x0, 0(ra)
+40b682b3   sub t0, a3, a1
+00128293   addi t0, t0, 1
+00229313   slli t1, t0, 2
+40610133   sub sp, sp, t1
+00010333   add t1, sp, x0
+000003b7   lui x07, 0x00000000
+00038393   addi x07, x07, 0x00000000
+0253d463   bge t2, t0, for_loop_1_end
+00b38e33   add t3, t2, a1
+002e1e13   slli t3, t3, 2
+00ae0e33   add t3, t3, a0
+000e2e83   lw t4, 0(t3)
+00239e13   slli t3, t2, 2
+006e0e33   add t3, t3, t1
+01de2023   sw t4, 0(t3)
+00138393   addi t2, t2, 1
+fe53c0e3   blt t2, t0, for_loop_1
+fec10113   addi sp, sp, -20
+00812023   sw s0, 0(sp)
+00912223   sw s1, 4(sp)
+01212423   sw s2, 8(sp)
+01312623   sw s3, 12(sp)
+01412823   sw s4, 16(sp)
+00000437   lui x08, 0x00000000
+00040413   addi x08, x08, 0x00000000
+40b604b3   sub s1, a2, a1
+00148913   addi s2, s1, 1
+40b689b3   sub s3, a3, a1
+00058a33   add s4, a1, x0
+0484c663   blt s1, s0, while_loop_1_end
+0529c463   blt s3, s2, while_loop_1_end
+00241393   slli t2, s0, 2
+006383b3   add t2, t2, t1
+0003ae03   lw t3, 0(t2)
+00291393   slli t2, s2, 2
+006383b3   add t2, t2, t1
+0003ae83   lw t4, 0(t2)
+002a1393   slli t2, s4, 2
+00a383b3   add t2, t2, a0
+01ceca63   blt t4, t3, else_1
+01c3a023   sw t3, 0(t2)
+001a0a13   addi s4, s4, 1
+00140413   addi s0, s0, 1
+0100006f   j x0, if_1_end
+01d3a023   sw t4, 0(t2)
+001a0a13   addi s4, s4, 1
+00190913   addi s2, s2, 1
+fb9ff0ef   j x0, while_loop_1
+0284c463   blt s1, s0, while_loop_2_end
+00241393   slli t2, s0, 2
+006383b3   add t2, t2, t1
+0003ae03   lw t3, 0(t2)
+002a1393   slli t2, s4, 2
+00a383b3   add t2, t2, a0
+01c3a023   sw t3, 0(t2)
+001a0a13   addi s4, s4, 1
+00140413   addi s0, s0, 1
+fe84d0e3   bge s1, s0, while_loop_2
+0329c463   blt s3, s2, while_loop_3_end
+00291393   slli t2, s2, 2
+006383b3   add t2, t2, t1
+0003ae03   lw t3, 0(t2)
+002a1393   slli t2, s4, 2
+00a383b3   add t2, t2, a0
+01c3a023   sw t3, 0(t2)
+001a0a13   addi s4, s4, 1
+00190913   addi s2, s2, 1
+ff29d0e3   bge s3, s2, while_loop_3
+00012403   lw s0, 0(sp)
+00412483   lw s1, 4(sp)
+00812903   lw s2, 8(sp)
+00c12983   lw s3, 12(sp)
+01012a03   lw s4, 16(sp)
+01410113   addi sp, sp, 20
+00229313   slli t1, t0, 2
+00610133   add sp, sp, t1
+00008067   jalr x0, 0(ra)
+00000000   (null)

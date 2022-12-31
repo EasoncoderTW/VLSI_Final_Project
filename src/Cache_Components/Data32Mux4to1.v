@@ -1,4 +1,4 @@
-
+`include "./Cache_Components/Cache_define_macro.v"
 module Data32Mux4to1(sel, A, B, C, D, out);
 input [1:0] sel; //Select Line
 input [`WORD-1:0] A, B, C, D;

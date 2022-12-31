@@ -1,8 +1,8 @@
-`include "../Cache.v"
-`include "../AXILite4_Mux.v"
-`include "../SRAM.v"
+`include "./Cache.v"
+`include "./AXILite4_Mux.v"
+`include "./SRAM.v"
 
-module testbench;
+module testbench1;
 
 wire  [31:0]    Inst_Cahe_readAddr_addr;
 wire            Inst_Cahe_readAddr_valid;

@@ -78,6 +78,7 @@ void translate_to_machine_code(uint8_t *mem, instr *imem, char *argv1)
 	FILE *mch_file = fopen(concat(path, "m_code.hex"), "w");
 	FILE *inst_file = fopen(concat(path, "inst.asm"), "w");
 	FILE *data_file = fopen(concat(path, "data.hex"), "w");
+	FILE *dump_file = fopen(concat(path, "dump.hex"), "w");
 
 	while (!dexit)
 	{
@@ -453,7 +454,7 @@ void translate_to_machine_code(uint8_t *mem, instr *imem, char *argv1)
 
 		case HCF:
 			binary = 0x0000000B;
-			dexit = true;
+			//dexit = true;
 			break;
 
 		//rv32擴增
@@ -707,6 +708,8 @@ void translate_to_machine_code(uint8_t *mem, instr *imem, char *argv1)
 		fprintf(mch_file, "%02x\n", (binary >> 16) & 0xff);
 		fprintf(mch_file, "%02x\n", (binary >> 24) & 0xff);
 
+		fprintf(dump_file, "%08x   %s\n", binary & 0xffffffff , i.psrc);
+
 		inst_cnt++;
 	}
 
@@ -719,4 +722,5 @@ void translate_to_machine_code(uint8_t *mem, instr *imem, char *argv1)
 	fclose(inst_file);
 	fclose(mch_file);
 	fclose(data_file);
+	fclose(dump_file);
 }
