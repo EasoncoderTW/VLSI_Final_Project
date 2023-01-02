@@ -67,7 +67,7 @@ localparam ture = 1'b1, false = 1'b0;
 
 wire Stall_DH, Stall_MA;
 wire [1:0]PCSel;
-wire [memAddrWidth-1:0] EXE_Target_pc, EXE_pc, pc, ID_pc, MEM_pc;
+wire [(memAddrWidth-1):0] EXE_target_pc, EXE_pc, pc, ID_pc, MEM_pc;
 wire IM_Mem_R, DM_Mem_R, IM_Valid, DM_Valid;
 wire [3:0]IM_Mem_W, DM_Mem_W;
 wire [31:0]im_cache_read_data, dm_cache_read_data;
@@ -84,13 +84,17 @@ wire [1:0] E_ASel;
 wire E_BSel;
 wire [14:0] E_ALUSel;
 wire [1:0] W_WBSel;
-wire [memAddrWidth-1:0] WB_pc_plus4;
+wire [(memAddrWidth-1):0] WB_pc_plus4;
 wire [31:0] ID_rs1_data, ID_rs2_data, wb_data;
 wire [31:0] EXE_rs1_data, EXE_rs2_data;
 wire [31:0] MEM_alu_out, MEM_rs2_data;
 wire [31:0] WB_ld_data, WB_alu_out, WB_ld_data_f;
-wire [31:0] WBD_wb_data, ld_data;
+wire [31:0] WBD_wb_data;
 wire [31:0] imm, EXE_imm;
+wire [31:0] alu_out;
+
+
+assign EXE_target_pc = alu_out[(memAddrWidth-1):0];
 
 //PC
 PC #(.addrWidth(memAddrWidth)) PC_ (
@@ -100,7 +104,7 @@ PC #(.addrWidth(memAddrWidth)) PC_ (
     .Stall(Stall_DH|Stall_MA),
     .PCSel(PCSel),
     .Predict_Target_pc({memAddrWidth{1'b0}}),
-    .EXE_Target_pc(EXE_Target_pc),
+    .EXE_Target_pc(EXE_target_pc),
     .EXE_pc(EXE_pc),
     .pc(pc)
 );
@@ -198,7 +202,7 @@ RegFile RegFile_(
     .clk(clk),
     .wb_en(W_RegWEn),
     .wb_data(wb_data),
-    .rd_index(WB_Inst),
+    .rd_index(WB_Inst[11:7]),
     .rs1_index(ID_Inst[19:15]),
     .rs2_index(ID_Inst[24:20]),
     .rs1_data_out(ID_rs1_data),
@@ -266,7 +270,7 @@ assign alu_src1 = (E_ASel == 2'd0)? E_rs1_rdata:
                   
 assign alu_src2 = (E_BSel == 1'b1)? EXE_imm:E_rs2_rdata;
                   
-wire [31:0] alu_out;
+
 
 ALU ALU_(
     .src1(alu_src1),
@@ -297,7 +301,7 @@ Cache data_cache(
     .w_en(DM_Mem_W),
     .address(MEM_alu_out[memAddrWidth-1:0]),
     .write_data(MEM_rs2_data),
-    .read_data(ld_data),
+    .read_data(dm_cache_read_data),
     .valid(DM_Valid),
     // AXI Lite 4 Bus master IO
     .readAddr_addr(Data_Cahe_readAddr_addr),
@@ -323,10 +327,10 @@ Reg_WB #(.addrWidth(memAddrWidth)) stage_WB(
     .clk(clk),
     .rst(rst),
     .Stall(Stall_MA|Hcf),
-    .pc_plus4_in(MEM_pc + 4),
+    .pc_plus4_in(MEM_pc + {{(memAddrWidth-3){1'b0}},3'd4}),
     .inst_in(MEM_Inst),
     .alu_out_in(MEM_alu_out), 
-    .ld_data_in(ld_data), 
+    .ld_data_in(dm_cache_read_data), 
     .pc_plus4(WB_pc_plus4),
     .inst(WB_Inst),
     .alu_out(WB_alu_out),

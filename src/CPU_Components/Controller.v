@@ -41,9 +41,9 @@ module Controller #(parameter memAddrWidth = 15)(
     output wire E_Branch_taken,
     output wire E_En,
 
-    input [memAddrWidth-1:0]ID_pc,
+    input [(memAddrWidth-1):0] ID_pc,
     input EXE_BP_taken,
-    input [memAddrWidth-1:0]EXE_target_pc,
+    input [(memAddrWidth-1):0] EXE_target_pc,
 
     // Flush
     output wire Flush,
@@ -100,7 +100,9 @@ assign E_Branch_taken = (`EXE_opcode == `BRANCH)?E_Branch:
 
 // pc predict miss signal
 wire Predict_Miss;
-assign Predict_Miss = (E_En && ((EXE_BP_taken != E_Branch_taken) || (E_Branch_taken && ID_pc!=EXE_target_pc)));
+wire PC_Miss_Match;
+assign PC_Miss_Match = (ID_pc == EXE_target_pc)? 1'b0:1'b1;
+assign Predict_Miss = (E_En && ((EXE_BP_taken != E_Branch_taken) || (E_Branch_taken && PC_Miss_Match)))?true:false;
 
 // Control signal - PC
 wire BP_En;
@@ -196,7 +198,7 @@ assign stall_ma_1 = (Mem_state == sNormal && (~IM_Done || ~DM_Done))?true:false;
 assign stall_ma_2 = (Mem_state == sWait && (~IM_Done || ~DM_Done))?true:false;
 assign stall_ma_3 = (Mem_state == sDM_Done && (~IM_Done))?true:false;
 assign stall_ma_4 = (Mem_state == DM_Done && (~IM_Done))?true:false;
-assign Stall_MA = (stall_ma_1 | stall_ma_2 : stall_ma_3: stall_ma_4);
+assign Stall_MA = (stall_ma_1 | stall_ma_2 | stall_ma_3| stall_ma_4);
 
 // Control signal - Data Memory
 wire [3:0] W_mask;
@@ -317,7 +319,7 @@ assign E_rs1_data_sel = (is_E_rs1_M_rd_overlap)?`MEM_STAGE:
                         (WBD_wb_data_hazard[0])?`WBD_STAGE:`EXE_STAGE;
                         
 //-- rs2 - Select the newest data
-assign E_rs1_data_sel = (is_E_rs2_M_rd_overlap)?`MEM_STAGE:
+assign E_rs2_data_sel = (is_E_rs2_M_rd_overlap)?`MEM_STAGE:
                         (is_E_rs2_W_rd_overlap)?`WB_STAGE:
                         (WBD_wb_data_hazard[1])?`WBD_STAGE:`EXE_STAGE;
 
