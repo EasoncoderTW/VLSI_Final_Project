@@ -1,7 +1,7 @@
 module Cache_Controller(clk, rst, p_w_en, p_r_en, hit, //input
                         readAddr_ready, readData_valid, writeAddr_ready, writeData_ready, writeResp_valid, writeResp_msg,
                         readAddr_valid, readData_ready, writeAddr_valid, writeData_valid, writeResp_ready, //output
-                        dataram_sel, p_ready, w_tagram, w_validram, w_dataram, validin);
+                        dataram_sel, p_valid, w_tagram, w_validram, w_dataram, validin);
 input clk, rst;
 input [3:0] p_w_en; // w_en from the processor
 input p_r_en;       // r_en from the processor
@@ -23,7 +23,7 @@ output reg readAddr_valid,
            writeResp_ready;
 
 output reg dataram_sel;         // signal to select the data to update the DataRam
-output reg p_ready;             // ready to the processor.
+output reg p_valid;             // ready to the processor.
 output reg w_tagram,            // signal to enable RAMs write operation.
            w_validram,
            w_dataram;
@@ -79,7 +79,7 @@ end
 always@(*) begin
     case(StateReg)
     S_IDLE                : begin
-        p_ready = 1'b0;                             // don't care
+        p_valid = 1'b0;                             // don't care
         readAddr_valid = 1'b0;                      // don't care
         readData_ready = 1'b0;                      // don't care
         {w_validram, w_tagram, w_dataram} = 3'b000; // don't care
@@ -90,7 +90,7 @@ always@(*) begin
         writeResp_ready = 1'b0;                     // don't care
     end
     S_READ_HIT            : begin
-        p_ready = 1'b1;
+        p_valid = 1'b1;
         readAddr_valid = 1'b0;                      // don't care
         readData_ready = 1'b0;                      // don't care
         {w_validram, w_tagram, w_dataram} = 3'b000; // don't care
@@ -101,7 +101,7 @@ always@(*) begin
         writeResp_ready = 1'b0;                     // don't care
     end
     S_READ_MISS           : begin
-        p_ready = 1'b0;                             // don't care
+        p_valid = 1'b0;                             // don't care
         readAddr_valid = 1'b1;                  
         readData_ready = 1'b0;                      // don't care
         {w_validram, w_tagram, w_dataram} = 3'b000; // don't care
@@ -112,7 +112,7 @@ always@(*) begin
         writeResp_ready = 1'b0;                     // don't care
     end
     S_READ_SYS_UPD_CACHE  : begin
-        p_ready = (readData_valid)? 1'b1 : 1'b0;
+        p_valid = (readData_valid)? 1'b1 : 1'b0;
         readAddr_valid = 1'b0;                      // don't care
         readData_ready = 1'b1;
         {w_validram, w_tagram, w_dataram} = (readData_valid)? 3'b111 : 3'b000;
@@ -123,7 +123,7 @@ always@(*) begin
         writeResp_ready = 1'b0;                     // don't care
     end
     S_WRITE_HIT           : begin
-        p_ready = 1'b0;                             // don't care
+        p_valid = 1'b0;                             // don't care
         readAddr_valid = 1'b0;                      // don't care
         readData_ready = 1'b0;                      // don't care
         {w_validram, w_tagram, w_dataram} = 3'b000; // don't care
@@ -134,7 +134,7 @@ always@(*) begin
         writeResp_ready = 1'b0;                     // don't care
     end
     S_WRITE_SYS_UPD_CACHE : begin
-        p_ready = (writeResp_valid)? 1'b1 : 1'b0;
+        p_valid = (writeResp_valid)? 1'b1 : 1'b0;
         readAddr_valid = 1'b0;                      // don't care
         readData_ready = 1'b0;                      // don't care
         {w_validram, w_tagram, w_dataram} = (writeResp_valid)? 3'b001 : 3'b000; 
@@ -145,7 +145,7 @@ always@(*) begin
         writeResp_ready = 1'b1;
     end
     S_WRITE_MISS          : begin
-        p_ready = 1'b0;                             // don't care
+        p_valid = 1'b0;                             // don't care
         readAddr_valid = 1'b0;                      // don't care
         readData_ready = 1'b0;                      // don't care
         {w_validram, w_tagram, w_dataram} = 3'b000; // don't care
@@ -156,7 +156,7 @@ always@(*) begin
         writeResp_ready = 1'b0;                     // don't care
     end
     S_WRITE_SYS           : begin
-        p_ready = (writeResp_valid)? 1'b1 : 1'b0;
+        p_valid = (writeResp_valid)? 1'b1 : 1'b0;
         readAddr_valid = 1'b0;                      // don't care
         readData_ready = 1'b0;                      // don't care
         {w_validram, w_tagram, w_dataram} = 3'b000; // don't care
@@ -167,7 +167,7 @@ always@(*) begin
         writeResp_ready = 1'b1;
     end
     default               : begin
-        p_ready = 1'b0;                             // don't care
+        p_valid = 1'b0;                             // don't care
         readAddr_valid = 1'b0;                      // don't care
         readData_ready = 1'b0;                      // don't care
         {w_validram, w_tagram, w_dataram} = 3'b000; // don't care

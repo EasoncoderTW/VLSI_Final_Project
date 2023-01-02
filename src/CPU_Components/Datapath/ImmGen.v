@@ -1,4 +1,4 @@
-`include "rv32_define.v"
+`include "./CPU_Components/rv32_define.v"
 
 module ImmGen (
     input [24:0] inst_31_7,

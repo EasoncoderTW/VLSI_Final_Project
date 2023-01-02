@@ -6,7 +6,7 @@ module Reg_MEM #(parameter addrWidth = 15)(
     input [31:0]inst_in, 
     input [31:0]alu_out_in,
     input [31:0]rs2_rdata_in,
-    output wire [addrWidth-1:0]pc,
+    output wire [addrWidth-1:0]pc_out,
     output wire [31:0]inst,
     output wire [31:0]alu_out,
     output wire [31:0]rs2_rdata, 

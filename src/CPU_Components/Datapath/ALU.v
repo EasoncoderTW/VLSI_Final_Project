@@ -1,4 +1,4 @@
-`include "rv32_define.v"
+`include "./CPU_Components/rv32_define.v"
 
 module ALU (
     input [31:0] src1,

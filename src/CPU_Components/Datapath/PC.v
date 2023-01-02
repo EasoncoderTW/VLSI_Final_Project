@@ -1,6 +1,6 @@
-`include "rv32_define.v"
+`include "./CPU_Components/rv32_define.v"
 
-module PC #(parameter addrWidth = 15)(
+module PC #(parameter addrWidth = 16)(
     input clk,
     input rst,
     input Hcf,
@@ -18,13 +18,13 @@ wire [addrWidth-1:0] pc_next;
 wire [addrWidth-1:0] pc_plus_4;
 wire [addrWidth-1:0] EXE_pc_plus_4;
 /* combinational circuit */
-assign pc_plus_4 = (pcReg + '{addrWidth'('d4)});
-assign EXE_pc_plus_4 = (EXE_pc + '{addrWidth'('d4)});
+assign pc_plus_4 = (pcReg + `{addrWidth`('d4)});
+assign EXE_pc_plus_4 = (EXE_pc + `{addrWidth`('d4)});
 
 assign pc_next = (Hcf | Stall)? pcReg:
-                 (PCSel == IF_P_T_PC)? Predict_Target_pc:
-                 (PCSel == EXE_PC_PLUS_4)? EXE_pc_plus_4:
-                 (PCSel == EXE_T_PC)? EXE_Target_pc:pc_plus_4;
+                 (PCSel == `IF_P_T_PC)? Predict_Target_pc:
+                 (PCSel == `EXE_PC_PLUS_4)? EXE_pc_plus_4:
+                 (PCSel == `EXE_T_PC)? EXE_Target_pc:pc_plus_4;
 assign pc = pcReg;
 
 /* sequentail citcuit */

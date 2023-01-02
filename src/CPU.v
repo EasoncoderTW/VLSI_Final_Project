@@ -1,20 +1,23 @@
-`include "./CPU_Components/Adder.v"
-`include "./CPU_Components/ALU.v"
 `include "./Cache.v"
-`include "./CPU_Components/Controller.v"
-`include "./CPU_Components/Decoder.v"
-`include "./CPU_Components/Imme_Ext.v"
-`include "./CPU_Components/JB_Unit.v"
-`include "./CPU_Components/LD_Filter.v"
-`include "./CPU_Components/Mux.v"
-`include "./CPU_Components/Reg_D.v"
-`include "./CPU_Components/Reg_E.v"
-`include "./CPU_Components/Reg_M.v"
-`include "./CPU_Components/Reg_PC.v"
-`include "./CPU_Components/Reg_W.v"
-`include "./CPU_Components/RegFile.v"
 
-module CPU(
+`include "./CPU_Components/Controller.v"
+`include "./CPU_Components/rv32_define.v"
+
+
+`include "./CPU_Components/Datapath/ALU.v"
+`include "./CPU_Components/Datapath/ImmGen.v"
+`include "./CPU_Components/Datapath/BranchComp.v"
+`include "./CPU_Components/Datapath/RegFile.v"
+`include "./CPU_Components/Datapath/PC.v"
+`include "./CPU_Components/Datapath/LD_Filter.v"
+
+`include "./CPU_Components/StageRegister/Reg_ID.v"
+`include "./CPU_Components/StageRegister/Reg_EXE.v"
+`include "./CPU_Components/StageRegister/Reg_MEM.v"
+`include "./CPU_Components/StageRegister/Reg_WB.v"
+`include "./CPU_Components/StageRegister/Reg_WB_data.v"
+
+module #(parameter memAddrWidth = 15) CPU(
     input clk,
     input rst,
     // Inst Cache - AXI Lite 4 master IO
@@ -57,54 +60,62 @@ module CPU(
     input                Data_Cahe_writeResp_valid,
     output  wire         Data_Cahe_writeResp_ready,
     // halt
-    output wire halt
+    output wire Hcf
 );
 
-wire [3:0] F_im_w_en;
-wire F_im_r_en;
-wire [31:0] pc_now;
-wire [31:0] pc_next;
-wire [31:0] inst;
-wire next_pc_sel;
-wire [31:0] pc_add_four;
-wire [31:0] jb_pc;
-wire data_hazard_stall;
-wire data_mem_stall;
-wire inst_mem_stall;
-wire inst_cache_ready;
-wire data_cache_ready;
+localparam ture = 1'b1, false = 1'b0;
 
-Reg_PC pc(
+wire Stall_DH, Stall_MA;
+wire [1:0]PCSel;
+wire [memAddrWidth-1:0] EXE_Target_pc, EXE_pc, pc, ID_pc, MEM_pc;
+wire IM_Mem_R, DM_Mem_R, IM_Valid, DM_Valid;
+wire [3:0]IM_Mem_W, DM_Mem_W;
+wire [31:0]im_cache_read_data, dm_cache_read_data;
+wire E_BrEq, E_BrLT, ID_BP_taken, E_Branch_taken, E_En, EXE_BP_taken
+wire Flush;
+wire [31:0] ID_Inst, EXE_Inst, MEM_Inst, WB_Inst;
+
+wire [1:0] E_rs1_data_sel, E_rs2_data_sel, W_wb_data_hazard, WBD_wb_data_hazard;
+
+wire [1:0] PCSel,
+wire [2:0] D_ImmSel,
+wire W_RegWEn,
+wire E_BrUn,
+wire [1:0] E_ASel,
+wire E_BSel,
+wire [14:0] E_ALUSel,
+wire [1:0] W_WBSel,
+wire [memAddrWidth-1:0] WB_pc_plus4;
+wire [31:0] ID_rs1_data, ID_rs2_data, wb_data;
+wire [31:0] EXE_rs1_data, EXE_rs2_data;
+wire [31:0] MEM_alu_out, MEM_rs2_data;
+wire [31:0] WB_ld_data, WB_alu_out, WB_ld_data_f;
+wire [31:0] WBD_wb_data, ld_data;
+wire [31:0] imm, EXE_imm;
+
+//PC
+PC #(.addrWidth(memAddrWidth)) PC_ (
     .clk(clk),
     .rst(rst),
-    .stall(inst_mem_stall|data_mem_stall|halt),
-    .next_pc(pc_next),
-    .current_pc(pc_now)
+    .Hcf(Hcf),
+    .stall(Stall_DH|Stall_MA),
+    .PCSel(PCSel),
+    .Predict_Target_pc(`{`memAddrWidth{1'b0}}),
+    .EXE_Target_pc(EXE_Target_pc),
+    .EXE_pc(EXE_pc),
+    .pc(pc)
 );
-
-Mux next_pc(
-    .sel(next_pc_sel),
-    .operand1(jb_pc),
-    .operand2(pc_add_four),
-    .mux_out(pc_next)
-);
-
-Adder add_four(
-    .operand1(pc_now), 
-    .operand2(32'd4), 
-    .add_out(pc_add_four) 
-);
-
+// Insruction Memory Cache
 Cache inst_cache(
     .clk(clk),
     .rst(rst),
     // Controller IO
-    .w_en(F_im_w_en),
-    .r_en(F_im_r_en),
-    .address(pc_now[15:0]),
+    .w_en(IM_Mem_W),
+    .r_en(IM_Mem_R),
+    .address(pc),
     .write_data(32'd0), // always zero
-    .read_data(inst),
-    .ready(inst_cache_ready),
+    .read_data(im_cache_read_data),
+    .valid(IM_Valid),
     // AXI Lite 4 Bus master IO
     .readAddr_addr(Inst_Cahe_readAddr_addr),
     .readAddr_valid(Inst_Cahe_readAddr_valid),
@@ -123,238 +134,172 @@ Cache inst_cache(
     .writeResp_valid(Inst_Cahe_writeResp_valid),
     .writeResp_ready(Inst_Cahe_writeResp_ready)
 );
-
 //================================================================================
-wire flush;
-assign flush = next_pc_sel;
-wire [31:0]reg_d_pc;
-wire [31:0]reg_d_inst;
-
-Reg_D reg_d( 
+// ID stage reg
+Reg_ID #(.addrWidth(memAddrWidth)) stage_ID ( 
     .clk(clk),
     .rst(rst),
-    .stall(data_hazard_stall|data_mem_stall|halt),
-    .flush(flush|inst_mem_stall),
-    .pc_in(pc_now), 
-    .inst_in(inst), 
-    .pc_out(reg_d_pc),
-    .inst_out(reg_d_inst)
+    .Flush(Flush),
+    .Stall(Stall_DH|Stall_MA|Hcf),
+    .pc_in(pc),
+    .inst_in(im_cache_read_data),
+    .BP_taken_in(false),
+    .pc_out(ID_pc),
+    .inst(ID_Inst),
+    .BP_taken(ID_BP_taken)
 );
 
-wire [2:0] func3;
-wire func7;
-wire [4:0] opcode;
-wire [4:0] rs1_index;
-wire [4:0] rs2_index;
-wire [4:0] rd_index;
+// WB Wire
+assign wb_data = (W_WBSel == `PC_PLUS_4)? {{`(32-memAddrWidth)`('d0)},WB_pc_plus4}:
+                      (W_WBSel == `ALUOUT)? WB_alu_out:
+                      (W_WBSel == `LD_DATA)? WB_ld_data_f:32'd0;
 
-Decoder decoder(
-    .inst(reg_d_inst),
-    .dc_out_opcode(opcode),
-    .dc_out_func3(func3),
-    .dc_out_func7(func7),
-    .dc_out_rs1_index(rs1_index),
-    .dc_out_rs2_index(rs2_index),
-    .dc_out_rd_index(rd_index)
-);
-
-wire [31:0] rs1_data;
-wire [31:0] rs2_data;
-wire D_rs1_data_sel;
-wire D_rs2_data_sel;
-wire [1:0]E_rs1_data_sel;
-wire [1:0]E_rs2_data_sel;
-wire E_jb_op1_sel;
-wire E_alu_op1_sel;
-wire E_alu_op2_sel;
-wire [2:0] E_f3;
-wire E_f7;
-wire [4:0] E_op;
-wire [2:0] W_f3;
-wire [3:0] M_dm_w_en;
-wire M_dm_r_en;
-wire W_wb_en;
-wire W_wb_data_sel;
-wire [4:0]W_rd_index;
-wire [31:0] alu_out;
-
-Controller controller(
+Controller #(.addrWidth(memAddrWidth)) Controller_(
     .clk(clk),
     .rst(rst),
-    .opcode(opcode), 
-    .func3(func3), 
-    .func7(func7), 
-    .rd_index(rd_index),
-    .rs1_index(rs1_index),
-    .rs2_index(rs2_index),  
-    .alu_result(alu_out[0]),
-    .inst_cache_ready(inst_cache_ready),
-    .data_cache_ready(data_cache_ready),
-    .data_hazard_stall(data_hazard_stall),
-    .halt(halt),
-    .F_im_r_en(F_im_r_en),
-    .data_mem_stall(data_mem_stall),
-    .inst_mem_stall(inst_mem_stall),
-    .next_pc_sel(next_pc_sel),  
-    .F_im_w_en(F_im_w_en),
-    .D_rs1_data_sel(D_rs1_data_sel),
-    .D_rs2_data_sel(D_rs2_data_sel),
+    .IM_Mem_R(IM_Mem_R), 
+    .IM_Mem_W(IM_Mem_W), 
+    .IM_Valid(IM_Valid), 
+    .DM_Mem_R(DM_Mem_R),
+    .DM_Mem_W(DM_Mem_W),
+    .DM_Valid(DM_Valid),  
+    .E_BrEq(E_BrEq),
+    .E_BrLT(E_BrLT),
+    .BP_taken(false),
+    .E_Branch_taken(E_Branch_taken),
+    .E_En(E_En),
+    .ID_pc(ID_pc),
+    .EXE_BP_taken(EXE_BP_taken),
+    .EXE_target_pc(EXE_target_pc),  
+    .Flush(Flush),
+    .Stall_DH(Stall_DH),
+    .Stall_MA(Stall_MA),
+    .IF_Inst(im_cache_read_data),
+    .ID_Inst(ID_Inst),
+    .EXE_Inst(EXE_Inst),
+    .MEM_Inst(MEM_Inst),
+    .WB_Inst(WB_Inst),
     .E_rs1_data_sel(E_rs1_data_sel),
     .E_rs2_data_sel(E_rs2_data_sel),
-    .E_jb_op1_sel(E_jb_op1_sel),
-    .E_alu_op1_sel(E_alu_op1_sel),
-    .E_alu_op2_sel(E_alu_op2_sel),
-    .E_op(E_op),
-    .E_f3(E_f3),
-    .E_f7(E_f7),
-    .M_dm_w_en(M_dm_w_en),
-    .M_dm_r_en(M_dm_r_en),
-    .W_wb_en(W_wb_en),
-    .W_rd_index(W_rd_index),
-    .W_f3(W_f3),
-    .W_wb_data_sel(W_wb_data_sel)
+    .W_wb_data_hazard(W_wb_data_hazard),
+    .WBD_wb_data_hazard(WBD_wb_data_hazard),
+    .PCSel(PCSel),
+    .D_ImmSel(D_ImmSel),
+    .W_RegWEn(W_RegWEn),
+    .E_BrUn(E_BrUn),
+    .E_ASel(E_ASel),
+    .E_BSel(E_BSel),
+    .E_ALUSel(E_ALUSel),
+    .W_WBSel(W_WBSel),
+    .Hcf(Hcf)
 );
 
-wire [31:0] wb_data;
-
-RegFile regfile(
+//RegFile
+RegFile RegFile_(
     .clk(clk),
-    .wb_en(W_wb_en),
+    .wb_en(W_RegWEn),
     .wb_data(wb_data),
-    .rd_index(W_rd_index),
-    .rs1_index(rs1_index),
-    .rs2_index(rs2_index),
-    .rs1_data_out(rs1_data),
-    .rs2_data_out(rs2_data)
+    .rd_index(WB_Inst),
+    .rs1_index(ID_Inst[19:15]),
+    .rs2_index(ID_Inst[24:20]),
+    .rs1_data_out(ID_rs1_data),
+    .rs2_data_out(ID_rs2_data)
 );
-
-wire [31:0] sext_imme;
-
-Imm_Ext imm_ext(
-    .inst(reg_d_inst),
-    .imm_ext_out(sext_imme)
-);
-
-wire [31:0] mux_d_rs1_data_out;
-wire [31:0] mux_d_rs2_data_out;
-
-Mux mux_d_rs1_data(
-    .sel(D_rs1_data_sel),
-    .operand1(wb_data),
-    .operand2(rs1_data),
-    .mux_out(mux_d_rs1_data_out)
-);
-
-Mux mux_d_rs2_data(
-    .sel(D_rs2_data_sel),
-    .operand1(wb_data),
-    .operand2(rs2_data),
-    .mux_out(mux_d_rs2_data_out)
+//ImmGen
+ImmGen ImmGen_(
+    .inst_31_7(ID_Inst[31:7]),
+    .ImmSel(D_ImmSel),
+    .imm(imm)
 );
 
 //================================================================================
-
-wire [31:0] reg_e_pc;
-wire [31:0] reg_e_rs1_data;
-wire [31:0] reg_e_rs2_data;
-wire [31:0] reg_e_sext_imme;
-
-Reg_E reg_e( 
+// EXE stage reg
+Reg_EXE #(.addrWidth(memAddrWidth)) stage_EXE( 
     .clk(clk),
     .rst(rst),
-    .stall(data_hazard_stall|data_mem_stall|inst_mem_stall|halt),
-    .flush(flush),
-    .pc_in(reg_d_pc), 
-    .rs1_data_in(mux_d_rs1_data_out), 
-    .rs2_data_in(mux_d_rs2_data_out), 
-    .sext_imme_in(sext_imme), 
-    .pc_out(reg_e_pc),
-    .rs1_data_out(reg_e_rs1_data),
-    .rs2_data_out(reg_e_rs2_data),
-    .sext_imme_out(reg_e_sext_imme)
+    .Flush(Flush|Stall_DH),
+    .Stall(Stall_MA|Hcf),
+    .pc_in(ID_pc), 
+    .inst_in(ID_Inst), 
+    .imm_in(imm), 
+    .rs1_data_in(ID_rs1_data), 
+    .rs2_data_in(ID_rs2_data), 
+    .BP_taken_in(ID_BP_taken), 
+    .pc_out(EXE_pc), 
+    .inst(EXE_Inst), 
+    .imm(EXE_imm), 
+    .rs1_rdata(EXE_rs1_data), 
+    .rs2_rdata(EXE_rs2_data), 
+    .BP_taken(EXE_BP_taken), 
+    
 );
 
-wire [31:0] mux_e_rs1_data_out;
-wire [31:0] mux_e_rs2_data_out;
-wire [31:0] reg_w_alu_out_out;
-
-wire [31:0]reg_m_alu_out_out;
-
+// Reg Data Forwarding
+wire [31:0] E_rs1_rdata;
+wire [31:0] E_rs2_rdata;
 //MUX
-assign mux_e_rs1_data_out = (E_rs1_data_sel== 2'd0)? wb_data:
-                            (E_rs1_data_sel== 2'd1)? reg_m_alu_out_out:reg_e_rs1_data;
+assign E_rs1_rdata = (E_rs1_data_sel ==`EXE_STAGE)? EXE_rs1_data:
+                     (E_rs1_data_sel ==`MEM_STAGE)? MEM_alu_out:
+                     (E_rs1_data_sel ==`WB_STAGE)? wb_data:
+                     (E_rs1_data_sel ==`WBD_STAGE)? WBD_wb_data:EXE_rs1_data
+            
 
-assign mux_e_rs2_data_out = (E_rs2_data_sel== 2'd0)? wb_data:
-                            (E_rs2_data_sel== 2'd1)? reg_m_alu_out_out:reg_e_rs2_data;
+assign E_rs2_rdata = (E_rs2_data_sel ==`EXE_STAGE)? EXE_rs2_data:
+                     (E_rs2_data_sel ==`MEM_STAGE)? MEM_alu_out:
+                     (E_rs2_data_sel ==`WB_STAGE)? wb_data:
+                     (E_rs2_data_sel ==`WBD_STAGE)? WBD_wb_data:EXE_rs2_data
 
-
-wire [31:0] alu_op1;
-wire [31:0] alu_op2;
-
-Mux mux_alu_op1(
-    .sel(E_alu_op1_sel),
-    .operand1(mux_e_rs1_data_out),
-    .operand2(reg_e_pc),
-    .mux_out(alu_op1)
+//Branch Comparator
+BranchComp BC_(
+    .BrUn(E_BrUn);
+    .src1(E_rs1_rdata),
+    .src2(E_rs2_rdata),
+    .BrEq(E_BrEq);
+    .BrLT(E_BrLT)
 );
 
-Mux mux_alu_op2(
-    .sel(E_alu_op2_sel),
-    .operand1(mux_e_rs2_data_out),
-    .operand2(reg_e_sext_imme),
-    .mux_out(alu_op2)
-);
+//ALU
+wire [31:0] alu_src1;
+wire [31:0] alu_src2;
 
-wire [31:0] jb_op1;
-wire [31:0] jb_op2;
-assign jb_op2 = reg_e_sext_imme;
+assign alu_src1 = (E_ASel == 2'd0)? E_rs1_rdata:
+                  (E_ASel == 2'd1)? {{`(32-memAddrWidth)`('d0)},EXE_pc}:
+                  (E_ASel == 2'd2)? 32'd0:E_rs1_rdata;
+assign alu_src2 = (E_BSel == 1'b1)? EXE_imm:E_rs2_rdata;
+                  
+wire [31:0] alu_out;
 
-Mux mux_jb_op1(
-    .sel(E_jb_op1_sel),
-    .operand1(mux_e_rs1_data_out),
-    .operand2(reg_e_pc),
-    .mux_out(jb_op1)
-);
-
-ALU alu(
-    .opcode(E_op),
-    .func3(E_f3),
-    .func7(E_f7),
-    .operand1(alu_op1),
-    .operand2(alu_op2),
-    .alu_out(alu_out)
-);
-
-JB_Unit jb_unit(
-    .operand1(jb_op1),
-    .operand2(jb_op2),
-    .jb_out(jb_pc)
+ALU ALU_(
+    .src1(alu_src1),
+    .src2(alu_src2),
+    .ALUSel(E_ALUSel),
+    .out(alu_out)
 );
 //===============================================================================
-
-wire [31:0] reg_m_rs2_data_out;
-
-Reg_M reg_m( 
+// MEM stage reg
+Reg_MEM #(.addrWidth(memAddrWidth)) stage_MEM( 
     .clk(clk),
     .rst(rst),
-    .stall(data_mem_stall|inst_mem_stall|halt),
-    .alu_out_in(alu_out), 
-    .rs2_data_in(mux_e_rs2_data_out), 
-    .alu_out_out(reg_m_alu_out_out), 
-    .rs2_data_out(reg_m_rs2_data_out)
+    .Stall(Stall_MA|Hcf),
+    .pc_in(EXE_pc), 
+    .inst_in(EXE_Inst), 
+    .rs2_rdata_in(E_rs2_rdata), 
+    .alu_out_in(alu_out)
+    .pc_out(MEM_pc),
+    .inst(MEM_Inst),
+    .alu_out(MEM_alu_out),
+    .rs2_rdata(MEM_rs2_data)
 );
-
-wire [31:0] ld_data;
-
+//Data Memory Cache
 Cache data_cache(
     .clk(clk),
     .rst(rst),
-    .r_en(M_dm_r_en),
-    .w_en(M_dm_w_en),
-    .address(reg_m_alu_out_out[15:0]),
-    .write_data(reg_m_rs2_data_out),
+    .r_en(DM_Mem_R),
+    .w_en(DM_Mem_W),
+    .address(MEM_alu_out[memAddrWidth-1:0]),
+    .write_data(MEM_rs2_data),
     .read_data(ld_data),
-    .ready(data_cache_ready),
+    .valid(DM_Valid),
     // AXI Lite 4 Bus master IO
     .readAddr_addr(Data_Cahe_readAddr_addr),
     .readAddr_valid(Data_Cahe_readAddr_valid),
@@ -374,33 +319,37 @@ Cache data_cache(
     .writeResp_ready(Data_Cahe_writeResp_ready)	
 );
 //===================================================================================
-
-
-wire [31:0]reg_w_ld_data_out;
-
-Reg_W reg_w( 
+// WB stage reg
+Reg_WB #(addrWidth.(memAddrWidth)) stage_WB( 
     .clk(clk),
     .rst(rst),
-    .stall(data_mem_stall|halt),
-    .alu_out_in(reg_m_alu_out_out), 
+    .stall(Stall_MA|Hcf),
+    .pc_plus4_in(MEM_pc + {`memAddrWidth`('d4)}),
+    .inst_in(MEM_Inst),
+    .alu_out_in(MEM_alu_out), 
     .ld_data_in(ld_data), 
-    .alu_out_out(reg_w_alu_out_out),
-    .ld_data_out(reg_w_ld_data_out)
+    .pc_plus4(WB_pc_plus4),
+    .inst(WB_Inst),
+    .alu_out_out(WB_alu_out),
+    .ld_data_out(WB_ld_data)
 );
 
-wire [31:0] ld_data_f;
-
+// Load data Filter
 LD_Filter ld_filter(
-    .func3(W_f3),
-    .ld_data(reg_w_ld_data_out),
-    .ld_data_f(ld_data_f)
+    .width(WB_Inst[14:12]),  //func3
+    .ld_data(WB_ld_data),
+    .ld_data_f(WB_ld_data_f)
 );
 
-Mux mux_wb(
-    .sel(W_wb_data_sel),
-    .operand1(ld_data_f),
-    .operand2(reg_w_alu_out_out),
-    .mux_out(wb_data)
-);
+// WB data stage reg
+Reg_WB #(addrWidth.(memAddrWidth)) stage_WB_data (
+    .clk(clk),
+    .rst(rst),
+    .Stall(Stall_MA|Hcf),
+    .WB_Hazard_in(W_wb_data_hazard),
+    .wb_data_in(wb_data),
+    .WB_Hazard(WBD_wb_data_hazard),
+    .wb_data(WBD_wb_data)
+)
 
 endmodule

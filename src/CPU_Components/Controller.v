@@ -1,261 +1,327 @@
-`include "rv32_define.v"
+`include "./CPU_Components/rv32_define.v"
 
-module Controller (
+`define IF_opcode   IF_Inst[6:0]
+
+`define ID_opcode   ID_Inst[6:0]
+`define ID_rs1      ID_Inst[19:15]
+`define ID_rs2      ID_Inst[24:20]
+
+`define EXE_opcode  EXE_Inst[6:0]
+`define EXE_funct3  EXE_Inst[14:12]
+`define EXE_rs1     EXE_Inst[19:15]
+`define EXE_rs2     EXE_Inst[24:20]
+`define EXE_rd      EXE_Inst[11:7]
+`define EXE_funct7  EXE_Inst[31:25]
+
+`define MEM_opcode  MEM_Inst[6:0]
+`define MEM_rd      MEM_Inst[11:7]
+`define MEM_funct3  MEM_Inst[14:12]
+
+`define WB_opcode  WB_Inst[6:0]
+`define WB_rd      WB_Inst[11:7]
+
+module Controller #(parameter memAddrWidth = 15)(
     input clk,
     input rst,
-    input [4:0] opcode, 
-    input [2:0] func3, 
-    input [4:0] rd_index, 
-    input [4:0] rs1_index, 
-    input [4:0] rs2_index, 
-    input func7, 
-    input alu_result,
 
-    input inst_cache_ready, // new
-    input data_cache_ready, // new
+    // Memory control signal interface
+    output wire IM_Mem_R,
+    output wire [3:0]IM_Mem_W,
+    input  IM_Valid,
+    output wire DM_Mem_R,
+    output wire [3:0]DM_Mem_W,
+    input  DM_Valid,
 
-    output wire data_hazard_stall, // modified
-    output wire data_mem_stall, // new
-    output wire inst_mem_stall, // new
-    output wire halt, // new
+    // branch Comp.
+    input E_BrEq,
+    input E_BrLT,
 
-    output wire F_im_r_en, // new, IF stage instruction memory read enable signal
-    output wire M_dm_r_en, // new, MEM stage data memory read enable signal
+    // Branch Prediction
+    input BP_taken,
+    output wire E_Branch_taken,
+    output wire E_En,
 
-    output wire next_pc_sel, 
-    output wire [3:0]F_im_w_en,
+    input [memAddrWidth-1:0]ID_pc,
+    input EXE_BP_taken,
+    input [memAddrWidth-1:0]EXE_target_pc,
 
-    output wire D_rs1_data_sel,
-    output wire D_rs2_data_sel,
+    // Flush
+    output wire Flush,
 
-    output wire [1:0]E_rs1_data_sel,
-    output wire [1:0]E_rs2_data_sel,
-    output wire E_jb_op1_sel,
-    output wire E_alu_op1_sel,
-    output wire E_alu_op2_sel,
-    output wire [4:0] E_op,
-    output wire [2:0] E_f3,
-    output wire E_f7,
+    // Stall
+    output wire Stall_DH,  // Data Hazard (Stall IF/ID/EXE) //TBD
+    output wire Stall_MA,  // Memory Access (Stall all)   //TBD
 
-    output wire [3:0]M_dm_w_en,
+    // inst
+    input [31:0] IF_Inst,
+    input [31:0] ID_Inst,
+    input [31:0] EXE_Inst,
+    input [31:0] MEM_Inst,
+    input [31:0] WB_Inst,
 
-    output wire W_wb_en,
-    output wire [4:0]W_rd_index,
-    output wire [2:0]W_f3,
-    output wire W_wb_data_sel
-);
+    // Data Forwarding Mux sel
+    output wire [1:0] E_rs1_data_sel, //TBD
+    output wire [1:0] E_rs2_data_sel, //TBD
 
+    // WB Data Hazard
+    output wire [1:0] W_wb_data_hazard, //TBD
+    input [1:0] WBD_wb_data_hazard,  //TBD
 
-//reg
-reg [4:0]E_op_reg, M_op_reg, W_op_reg;
-reg [2:0]E_f3_reg, M_f3_reg, W_f3_reg;
-reg [4:0]E_rd_reg, M_rd_reg, W_rd_reg;
-reg [4:0]E_rs1_reg;
-reg [4:0]E_rs2_reg;
-reg E_f7_reg;
+    // sel
+    output wire [1:0] PCSel,
+    output wire [2:0] D_ImmSel,
+    output wire W_RegWEn,
+    output wire E_BrUn,
+    output wire [1:0] E_ASel,
+    output wire E_BSel,
+    output wire [14:0] E_ALUSel,
+    output wire [1:0] W_WBSel,
+
+    output wire Hcf
+);  
+
+localparam true = 1, false = 0;
+
+// Control signal - Branch Prediction
+assign E_En = (`EXE_opcode == `BRANCH || `EXE_opcode == `JAL || `EXE_opcode == `JALR ); // Branch Tatget Enable
+wire E_Branch;
+assign E_Branch = (`EXE_opcode == BRANCH)?(
+    (`EXE_funct3 == EQ)? E_BrEq:
+    (`EXE_funct3 == NE)? ~E_BrEq:
+    (`EXE_funct3 == LT)? E_BrLT:
+    (`EXE_funct3 == GE)? ~E_BrLT:
+    (`EXE_funct3 == LTU)? E_BrLT:
+    (`EXE_funct3 == GEU)? ~E_BrLT:false
+):false;
+
+assign E_Branch_taken = (`EXE_opcode == `BRANCH)?E_Branch:
+                        (`EXE_opcode == `JALR)?true:
+                        (`EXE_opcode == `JAL)?true:false;
+
+// pc predict miss signal
+wire Predict_Miss;
+Predict_Miss = (E_En && ((EXE_BP_taken != E_Branch_taken) || (E_Branch_taken && ID_pc!=EXE_target_pc)));
+
+// Control signal - PC
+wire BP_En;
+assign BP_En = (`IF_opcode == `BRANCH || `IF_opcode == `JAL || `IF_opcode == `JALR ) // Branch Predict Enable
+
+assign PCSel = (Predict_Miss)?(
+    (E_Branch_taken)? `EXE_T_PC:`EXE_PC_PLUS_4):(
+    (BP_taken & BP_En)? `IF_P_T_PC:`IF_PC_PLUS_4);
+
+// Control signal - Branch comparator
+assign E_BrUn = (`EXE_Inst[13] == 1)true:false;
+
+// Control signal - Immediate generator
+assign D_ImmSel = (`ID_opcode == `OP_IMM)? `I_type:
+                  (`ID_opcode == `LOAD)? `I_type:
+                  (`ID_opcode == `STORE)? `S_type:
+                  (`ID_opcode == `BRANCH)? `B_type:
+                  (`ID_opcode == `JALR)? `I_type:
+                  (`ID_opcode == `JAL)? `J_type:
+                  (`ID_opcode == `LUI)? `U_type:
+                  (`ID_opcode == `AUIPC)? `U_type:3'd0;
+
+// Control signal - Scalar ALU
+assign E_ASel = (`EXE_opcode == `BRANCH)? 2'd1:
+                (`EXE_opcode == `JAL)? 2'd1:
+                (`EXE_opcode == `AUIPC)? 2'd1:
+                (`EXE_opcode == `LUI)? 2'd2:2'd0;
+
+assign E_BSel = (`EXE_opcode == `OP)? 1'b0:
+                (`EXE_opcode == `OP_IMM)? 1'b1:1'b1;
+
+assign E_ALUSel = (`EXE_opcode == `OP)? {`EXE_funct7, 5'b11111, `EXE_funct3}:
+                  (`EXE_opcode == `OP_IMM)? (
+                    (`EXE_funct3 == 3'b001 || `EXE_funct3 == 3'b101)?(
+                        {7'd0, 5'b11111, `EXE_funct3}
+                    ):{`EXE_funct7, 5'b11111, `EXE_funct3}
+                  ):{7'd0, 5'b11111, 3'd0};
+
+// Memory Cache Access FSM
+localparam sNormal = 2'b00,
+           sWait = 2'b01,
+           sIM_Done = 2'b10;
+           sDM_Done = 2'b11;
 
 // cache hand-shake FSM
-reg [1:0] im_cache_state;
-reg [1:0] dm_cache_state;
-localparam sIDLE = 2'b00,
-        sWait = 2'b01,
-        sDone = 2'b10;
+reg [1:0] Mem_state;
+wire [1:0] Mem_state_next;
+wire [1:0] sNormal_Wait_next;
+wire [1:0] sIM_Done_next;
+wire [1:0] sDM_Done_next;
 
 // wire
-wire im_cache_to_read;
-wire dm_cache_to_read;
-wire dm_cache_to_write;
+wire IM_to_Read;
+wire IM_to_Write;
+wire DM_to_Read;
+wire DM_to_Write;
 
-//instuction memory write back enable
-assign F_im_w_en =  4'b0000;    // never write
-assign im_cache_to_read = 1'b1;        // always read
-assign F_im_r_en = (im_cache_state == sDone)? 1'b0:im_cache_to_read; // controlled by FSM
+wire IM_Done;
+wire DM_Done;
 
-//register data sel in D
-wire is_D_rs1_W_rd_overlap;
+// signals
+assign IM_to_Read = true;
+assign IM_to_Write = false;
+assign DM_to_Read = (`MEM_opcode == `LOAD)?true:false;
+assign DM_to_Write = (`MEM_opcode == `STORE)?true:false;
+
+assign IM_Done = (~IM_to_Read & ~IM_to_Write) | (IM_Valid);
+assign DM_Done = (~DM_to_Read & ~DM_to_Write) | (DM_Valid);
+
+// Memory Access State
+assign sNormal_Wait_next = (IM_Done & DM_Done)?sNormal:
+                      (IM_Done)?sIM_Done:
+                      (DM_Done)?sDM_Done:sWait;
+assign sIM_Done_next = (DM_Done)?sNormal:sIM_Done;
+assign sDM_Done_next = (IM_Done)?sNormal:sDM_Done;
+assign Mem_state_next = (Mem_state == sNormal)?sNormal_Wait_next:
+                        (Mem_state == sWait)?sNormal_Wait_next:
+                        (Mem_state == sIM_Done)?sIM_Done_next:
+                        (Mem_state == sDM_Done)?sDM_Done_next:sNormal;
+
+/* sequential circuit */
+always@(posedge clk ot posedge rst)begin
+  if(rst)begin
+    Mem_state <= sNormal;
+  end
+  else begin
+    Mem_state <= Mem_state_next;
+  end
+end
+
+// Stall -- stall for Memory Access (All Stalled, related to FSM)
+wire stall_ma_1, stall_ma_2, stall_ma_3, stall_ma_4;
+assign stall_ma_1 = (Mem_state == sNormal && (~IM_Done || ~DM_Done))?true:false;
+assign stall_ma_2 = (Mem_state == sWait && (~IM_Done || ~DM_Done))?true:false;
+assign stall_ma_3 = (Mem_state == sDM_Done && (~IM_Done))?true:false;
+assign stall_ma_4 = (Mem_state == DM_Done && (~IM_Done))?true:false;
+assign Stall_MA = (stall_ma_1 | stall_ma_2 : stall_ma_3: stall_ma_4);
+
+// Control signal - Data Memory
+wire [3:0] W_mask;
+assign W_mask = (`MEM_funct3 == `Byte)?  4'b0001:
+                (`MEM_funct3 == `UByte)? 4'b0001:
+                (`MEM_funct3 == `Half)?  4'b0011:
+                (`MEM_funct3 == `UHalf)? 4'b0011:
+                (`MEM_funct3 == `Word)?  4'b1111:4'd0;
+
+assign DM_Mem_R = (DM_to_Read && Mem_state!=sDM_Done)?true:false;
+assign DM_Mem_W = (DM_to_Write && Mem_state!=sDM_Done)?W_mask:4'd0;
+
+// Control signal - Inst Memory
+assign IM_Mem_R = (Mem_state!=sIM_Done)?true:false; // always true
+assign IM_Mem_W = 4'd0; // always false
+
+// Control signal - Scalar Write Back
+wire W_reg_en;
+assign W_reg_en = (`WB_opcode == `OP)? true:
+                  (`WB_opcode == `OP_IMM)? true:
+                  (`WB_opcode == `LOAD)? true:
+                  (`WB_opcode == `JALR)? true:
+                  (`WB_opcode == `JAL)? true:
+                  (`WB_opcode == `AUIPC)? true:
+                  (`WB_opcode == `LUI)? true:false;false
+
+assign W_RegWEn = (Stall_MA)?false:W_reg_en;
+
+assign W_WBSel = (`WB_opcode == `LOAD)? `LD_DATA:
+                 (`WB_opcode == `JALR)? `PC_PLUS_4:
+                 (`WB_opcode == `JAL)? `PC_PLUS_4:`ALUOUT;
+
+// Control signal - Others
+assign Hcf = (`IF_opcode == `HCF)?true:false;
+
+/****************** Data Hazard ******************/
+
+// Use rs in ID stage 
 wire is_D_use_rs1;
-assign D_rs1_data_sel = is_D_rs1_W_rd_overlap ? 1'd1 : 1'd0;
-assign is_D_rs1_W_rd_overlap = is_D_use_rs1 & W_wb_en & (rs1_index == W_rd_reg) & W_rd_reg != 0 ;
-assign is_D_use_rs1 = (opcode == `R_type_)? 1'b1:
-                            (opcode == `I_type_)? 1'b1:
-                            (opcode == `store_)? 1'b1:
-                            (opcode == `load_)? 1'b1:
-                            (opcode == `branch_)? 1'b1:
-                            (opcode == `jalr_)? 1'b1:1'b0;
-
-wire is_D_rs2_W_rd_overlap;
 wire is_D_use_rs2;
-assign D_rs2_data_sel = is_D_rs2_W_rd_overlap ? 1'd1 : 1'd0;
-assign is_D_rs2_W_rd_overlap = is_D_use_rs2 & W_wb_en & (rs2_index == W_rd_reg) & W_rd_reg != 0 ;
-assign is_D_use_rs2 = (opcode == `R_type_)? 1'b1:
-                            (opcode == `store_)? 1'b1:
-                            (opcode == `branch_)? 1'b1:1'b0;
+assign is_D_use_rs1 = (`ID_opcode == `OP)? true:
+                      (`ID_opcode == `OP_IMM)? true:
+                      (`ID_opcode == `STORE)? true:
+                      (`ID_opcode == `LOAD)? true:
+                      (`ID_opcode == `BRANCH)? true:
+                      (`ID_opcode == `JALR)? true:false;
 
+assign is_D_use_rs2 = (`ID_opcode == `OP)? true:
+                      (`ID_opcode == `STORE)? true:
+                      (`ID_opcode == `BRANCH)? true:false;
 
-//register data sel in E
-wire is_E_rs1_W_rd_overlap;
-wire is_E_rs1_M_rd_overlap;
+// Use rs in EXE stage 
 wire is_E_use_rs1;
-wire is_M_use_rd;
-assign E_rs1_data_sel = is_E_rs1_M_rd_overlap ? 2'd1 : 
-                is_E_rs1_W_rd_overlap ? 2'd0 : 2'd2;
-assign is_E_rs1_W_rd_overlap = is_E_use_rs1 & W_wb_en & (E_rs1_reg == W_rd_reg) & W_rd_reg != 0 ;
-assign is_E_rs1_M_rd_overlap = is_E_use_rs1 & is_M_use_rd & (E_rs1_reg == M_rd_reg) & M_rd_reg != 0;
-assign is_E_use_rs1 = (E_op_reg == `R_type_)? 1'b1:
-                            (E_op_reg == `I_type_)? 1'b1:
-                            (E_op_reg == `store_)? 1'b1:
-                            (E_op_reg == `load_)? 1'b1:
-                            (E_op_reg == `branch_)? 1'b1:
-                            (E_op_reg == `jalr_)? 1'b1:1'b0;
-
-assign is_M_use_rd = (M_op_reg == `lui_)?       1'b1:
-                        (M_op_reg == `auipc_)?     1'b1:
-                        (M_op_reg == `load_)?      1'b1:
-                        (M_op_reg == `jal_)?       1'b1:
-                        (M_op_reg == `jalr_)?      1'b1:
-                        (M_op_reg == `I_type_)?    1'b1:
-                        (M_op_reg == `R_type_)?    1'b1:1'b0;
-
-wire is_E_rs2_W_rd_overlap;
-wire is_E_rs2_M_rd_overlap;
 wire is_E_use_rs2;
-assign E_rs2_data_sel = is_E_rs2_M_rd_overlap ? 2'd1 : 
-                        is_E_rs2_W_rd_overlap ? 2'd0 : 2'd2;
-assign is_E_rs2_W_rd_overlap = is_E_use_rs2 & W_wb_en & (E_rs2_reg == W_rd_reg) & W_rd_reg != 0 ;
-assign is_E_rs2_M_rd_overlap = is_E_use_rs2 & is_M_use_rd & (E_rs2_reg == M_rd_reg) & M_rd_reg != 0;
-assign is_E_use_rs2 = (E_op_reg == `R_type_)? 1'b1:
-                            (E_op_reg == `store_)? 1'b1:
-                            (E_op_reg == `branch_)? 1'b1:1'b0;
+assign is_E_use_rs1 = (`EXE_opcode == `OP)? true:
+                      (`EXE_opcode == `OP_IMM)? true:
+                      (`EXE_opcode == `STORE)? true:
+                      (`EXE_opcode == `LOAD)? true:
+                      (`EXE_opcode == `BRANCH)? true:
+                      (`EXE_opcode == `JALR)? true:false;
 
-// data_hazard_stall
-wire is_DE_overlap;
-wire is_D_rs1_E_rd_overlap;
-wire is_D_rs2_E_rd_overlap;
+assign is_E_use_rs2 = (`EXE_opcode == `OP)? true:
+                      (`EXE_opcode == `STORE)? true:
+                      (`EXE_opcode == `BRANCH)? true:false;
 
-assign data_hazard_stall = (E_op_reg == `load_) & is_DE_overlap;
-assign is_DE_overlap = (is_D_rs1_E_rd_overlap | is_D_rs2_E_rd_overlap);
-assign is_D_rs1_E_rd_overlap = is_D_use_rs1 & (rs1_index == E_rd_reg) & E_rd_reg != 0;
-assign is_D_rs2_E_rd_overlap = is_D_use_rs2 & (rs2_index == E_rd_reg) & E_rd_reg != 0;
+// Use rd in MEM stage 
+wire is_M_use_rd;
+assign is_M_use_rd = (`MEM_opcode == `OP)? true:
+                      (`MEM_opcode == `OP_IMM)? true:
+                      (`MEM_opcode == `LOAD)? true:      // Don't care, the reslut will be flushed
+                      (`MEM_opcode == `JALR)? true:
+                      (`MEM_opcode == `JAL)? true:
+                      (`MEM_opcode == `AUIPC)? true:
+                      (`MEM_opcode == `LUI)? true:false;
+// Use rd in WB stage 
+wire is_W_use_rd;
+assign is_W_use_rd = W_reg_en;
 
-// data memory read stall
-assign data_mem_stall = ((dm_cache_to_read||dm_cache_to_write) & dm_cache_state != sDone & (~data_cache_ready));
+// Hazard condition (rd, rs overlap)
+wire is_D_rs1_E_rd_overlap_in_load;
+wire is_D_rs2_E_rd_overlap_in_load;
 
-// inst memory read stall
-assign inst_mem_stall = (im_cache_to_read & im_cache_state != sDone & (~inst_cache_ready));
+wire is_E_rs1_M_rd_overlap;
+wire is_E_rs2_M_rd_overlap;
 
-// cpu halt
-assign halt = (W_op_reg == `HCF);
+wire is_E_rs1_W_rd_overlap;
+wire is_E_rs2_W_rd_overlap;
 
-//next_pc_sel normal (+4) when sel = 0
-assign next_pc_sel =   (E_op_reg == `jal_)? 1'b1:
-                            (E_op_reg == `jalr_)? 1'b1:
-                            (E_op_reg == `branch_)? alu_result:1'b0;
+wire is_D_rs1_W_rd_overlap;
+wire is_D_rs2_W_rd_overlap;
 
-//jb_op1_sel normal (pc) when sel = 0 or (rs1) when = 1 
-assign E_jb_op1_sel = (E_op_reg == `jalr_)? 1'b1:1'b0;
+assign  is_D_rs1_E_rd_overlap_in_load = (is_D_use_rs1 && (EXE_opcode == LOAD) && (ID_rs1 == EXE_rd) && (EXE_rd != 5'd0))?true:false;
+assign  is_D_rs2_E_rd_overlap_in_load = (is_D_use_rs2 && (EXE_opcode == LOAD) && (ID_rs2 == EXE_rd) && (EXE_rd != 5'd0))?true:false;
 
-//alu_op1_sel normal (pc) when sel = 0 or (rs1) when = 1 
-assign E_alu_op1_sel =   (E_op_reg == `lui_)?       1'b0:
-                            (E_op_reg == `auipc_)?     1'b0:
-                            (E_op_reg == `jalr_)?     1'b0:
-                            (E_op_reg == `jal_)?      1'b0:1'b1;
+assign  is_E_rs1_M_rd_overlap = (is_E_use_rs1 && is_M_use_rd && (EXE_rs1 == MEM_rd) && (MEM_rd != 5'd0))?true:false;
+assign  is_E_rs2_M_rd_overlap = (is_E_use_rs2 && is_M_use_rd && (EXE_rs2 == MEM_rd) && (MEM_rd != 5'd0))?true:false;
 
-//alu_op2_sel normal (imm) when sel = 0 or (rs2) when = 1 
-assign E_alu_op2_sel =   (E_op_reg == `R_type_)?    1'b1:
-                            (E_op_reg == `branch_)?    1'b1:1'b0;
+assign  is_E_rs1_W_rd_overlap = (is_E_use_rs1 && is_W_use_rd && (EXE_rs1 == WB_rd) && (WB_rd != 5'd0))?true:false;
+assign  is_E_rs2_W_rd_overlap = (is_E_use_rs2 && is_W_use_rd && (EXE_rs2 == WB_rd) && (WB_rd != 5'd0))?true:false;
 
-//E output
-assign E_op = E_op_reg;
-assign E_f3 = E_f3_reg;
-assign E_f7 = E_f7_reg;
+assign  is_D_rs1_W_rd_overlap = (is_D_use_rs1 && is_W_use_rd && (ID_rs1 == WB_rd) && (WB_rd != 5'd0))?true:false;
+assign  is_D_rs2_W_rd_overlap = (is_D_use_rs2 && is_W_use_rd && (ID_rs2 == WB_rd) && (WB_rd != 5'd0))?true:false;
 
-//register write back enable
-assign W_wb_en = (W_op_reg == `lui_)?       1'b1:
-                    (W_op_reg == `auipc_)?     1'b1:
-                    (W_op_reg == `load_)?      1'b1:
-                    (W_op_reg == `jal_)?       1'b1:
-                    (W_op_reg == `jalr_)?      1'b1:
-                    (W_op_reg == `I_type_)?    1'b1:
-                    (W_op_reg == `R_type_)?    1'b1:1'b0;
+// WB Hazard (rs2, rs1) - to stage Reg
+assign  W_wb_data_hazard = {is_D_rs2_W_rd_overlap,is_D_rs1_W_rd_overlap};
 
-//data memory write back enable
-assign dm_cache_to_write =  (M_op_reg != `store_)?       4'b0000:
-                            (M_f3_reg == `sb_)?       4'b0001:
-                            (M_f3_reg == `sh_)?       4'b0011:
-                            (M_f3_reg == `sw_)?       4'b1111:4'b0000;
-assign M_dm_w_en = (dm_cache_state == sDone)? 4'b0000:dm_cache_to_write;
+// Stall -- stall for Data Hazard (stall PC, stage ID. Flush stage EXE to make a Bubble early)
+assign  Stall_DH = (is_D_rs1_E_rd_overlap_in_load|is_D_rs2_E_rd_overlap_in_load); 
 
-assign dm_cache_to_read = (M_op_reg == `load_)? 1'b1:1'b0; 
-assign M_dm_r_en = (dm_cache_state == sDone)? 1'b0:dm_cache_to_read;
+// Control signal - Flush
+//-- Flush for Predict_Miss (Flush stage ID, stage EXE, make 2 Bubbles)
+assign Flush = Predict_Miss;
 
-assign W_rd_index = W_rd_reg;
-assign W_f3 = W_f3_reg;
+// Control signal - Data Forwarding
+//-- rs1 - Select the newest data
+assign E_rs1_data_sel = (is_E_rs1_M_rd_overlap)?`MEM_STAGE:
+                        (is_E_rs1_W_rd_overlap)?`WB_STAGE:
+                        (WBD_wb_data_hazard[0])?`WBD_STAGE:`EXE_STAGE;
+                        
+//-- rs2 - Select the newest data
+assign E_rs1_data_sel = (is_E_rs2_M_rd_overlap)?`MEM_STAGE:
+                        (is_E_rs2_W_rd_overlap)?`WB_STAGE:
+                        (WBD_wb_data_hazard[1])?`WBD_STAGE:`EXE_STAGE;
 
-//wb_sel normal (alu_out) when sel = 0 or (load_out) when = 1 
-assign W_wb_data_sel = (W_op_reg == `load_)? 1'b1:1'b0;
-
-
-wire [1:0]im_cache_state_next;
-assign im_cache_state_next = (im_cache_state == sIDLE)?((inst_mem_stall)? sWait:((data_mem_stall)? sDone:sIDLE)):
-                             (im_cache_state == sWait)?((inst_mem_stall)? sWait:((data_mem_stall)? sDone:sIDLE)):
-                             (im_cache_state == sDone)?((data_mem_stall)? sDone:sIDLE):sIDLE;
-// Cache Read/Wrtie FSM
-always@(posedge clk or posedge rst) begin
-    if(rst) begin
-        im_cache_state <= sIDLE;
-    end
-    else begin
-        im_cache_state <= im_cache_state_next;
-    end
-end
-
-wire [1:0]dm_cache_state_next;
-assign dm_cache_state_next = (dm_cache_state == sIDLE)?((data_mem_stall)? sWait:((inst_mem_stall)? sDone:sIDLE)):
-                             (dm_cache_state == sWait)?((data_mem_stall)? sWait:((inst_mem_stall)? sDone:sIDLE)):
-                             (dm_cache_state == sDone)?((inst_mem_stall)? sDone:sIDLE):sIDLE;
-// Cache Read/Wrtie FSM
-always@(posedge clk or posedge rst) begin
-    if(rst) begin
-        dm_cache_state <= sIDLE;
-    end
-    else begin
-        dm_cache_state <= dm_cache_state_next;
-    end
-end
-
-// 5 stage pipelined stage register
-always @(posedge clk or posedge rst) begin
-    if(rst) begin
-        E_op_reg <= 5'd0;
-        M_op_reg <= 5'd0;
-        W_op_reg <= 5'd0;
-        E_f3_reg <= 3'd0;
-        M_f3_reg <= 3'd0;
-        W_f3_reg <= 3'd0;
-        E_rd_reg <= 5'd0;
-        M_rd_reg <= 5'd0;
-        W_rd_reg <= 5'd0;
-        E_rs1_reg <= 5'd0;
-        E_rs2_reg <= 5'd0;
-        E_f7_reg <= 1'd0;
-    end
-    else begin
-        E_op_reg <= (data_hazard_stall)? 5'd0:((data_mem_stall|inst_mem_stall)?E_op_reg:((next_pc_sel)?5'd0:opcode));
-        E_f3_reg <= (data_hazard_stall)? 3'd0:((data_mem_stall|inst_mem_stall)?E_f3_reg:((next_pc_sel)?3'd0:func3));
-        E_rd_reg <= (data_hazard_stall)? 5'd0:((data_mem_stall|inst_mem_stall)?E_rd_reg:((next_pc_sel)?5'd0:rd_index));
-        E_rs1_reg <= (data_hazard_stall)? 5'd0:((data_mem_stall|inst_mem_stall)?E_rs1_reg:((next_pc_sel)?5'd0:rs1_index));
-        E_rs2_reg <= (data_hazard_stall)? 5'd0:((data_mem_stall|inst_mem_stall)?E_rs2_reg:((next_pc_sel)?5'd0:rs2_index));
-        E_f7_reg <= (data_hazard_stall)? 1'd0:((data_mem_stall|inst_mem_stall)?E_f7_reg:((next_pc_sel)?1'd0:func7));
-        
-        M_op_reg <= (data_mem_stall|inst_mem_stall)?M_op_reg:E_op_reg;
-        M_f3_reg <= (data_mem_stall|inst_mem_stall)?M_f3_reg:E_f3_reg;
-        M_rd_reg <= (data_mem_stall|inst_mem_stall)?M_rd_reg:E_rd_reg;
-
-        W_op_reg <= (data_mem_stall|inst_mem_stall)?W_op_reg:M_op_reg;
-        W_f3_reg <= (data_mem_stall|inst_mem_stall)?W_f3_reg:M_f3_reg;
-        W_rd_reg <= (data_mem_stall|inst_mem_stall)?W_rd_reg:M_rd_reg;
-    end
-end
-
+  /****************** Data Hazard End******************/
 
 endmodule
