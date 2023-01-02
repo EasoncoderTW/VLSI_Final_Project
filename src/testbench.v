@@ -22,7 +22,7 @@ always begin
         $display("+++++++++++++++++ Memory Dump +++++++++++++++++");
 
         for(i=0;i<128;i=i+4)begin
-            $display("mem[%h] %h %h %h %h",i,
+            $display("mem[%h] %h %h %h %h",16'h8000+i,
                 top.memory.mem[16'h8000+i],
                 top.memory.mem[16'h8000+i+1],
                 top.memory.mem[16'h8000+i+2],
@@ -34,7 +34,7 @@ end
 
 initial begin
     /* load SRAM */
-    $readmemh("./test/Emulator/Mem.hex",top.memory.mem);
+    $readmemh("../test/Emulator/Mem.hex",top.memory.mem);
     /* reset signal */
     clk = 0;
     rst = 0;
@@ -51,8 +51,13 @@ initial begin
 end
 
 initial begin
-    $dumpfile("testbench.fsdb");
-    $dumpvars;
+    `ifdef iverilog
+        $dumpfile("testbench.vcd");
+        $dumpvars(0, testbench);
+    `else
+        $dumpfile("testbench.fsdb");
+        $dumpvars;
+    `endif
 end
 
 endmodule

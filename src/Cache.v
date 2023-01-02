@@ -62,6 +62,7 @@ wire validin;
 wire dataram_sel;
 wire [`CACHE_LINE_BIT_LENGTH-1:0] dataram_datain;
 wire [`CACHE_LINE_BIT_LENGTH-1:0] dataram_dataout;
+wire [`CACHE_LINE_BIT_LENGTH-1:0] dataout;
 wire [15:0] dataram_strb;
 wire cache_line_valid;
 wire [7:0] cache_line_tag;
@@ -113,12 +114,13 @@ Data16Mux Data16Mux(.sel(dataram_sel), .A(cache_line_strb), .B(16'hffff), .out(d
 
 // DataRam flow out a cache line in one read
 // Thus, we have to choose which word to flow into our processor
+assign dataout = (readData_valid) ? readData_data : dataram_dataout;
 Data32Mux4to1 Data32Mux4to1(
     .sel(address[3:2]), 
-    .A(dataram_dataout[31:0]), 
-    .B(dataram_dataout[63:32]), 
-    .C(dataram_dataout[95:64]), 
-    .D(dataram_dataout[127:96]),
+    .A(dataout[31:0]), 
+    .B(dataout[63:32]), 
+    .C(dataout[95:64]), 
+    .D(dataout[127:96]),
     .out(read_data)
     );
 
