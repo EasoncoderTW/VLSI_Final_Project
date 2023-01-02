@@ -9,7 +9,7 @@ module Reg_MEM #(parameter addrWidth = 15)(
     output wire [addrWidth-1:0]pc_out,
     output wire [31:0]inst,
     output wire [31:0]alu_out,
-    output wire [31:0]rs2_rdata, 
+    output wire [31:0]rs2_rdata
 );
 
 reg [addrWidth-1:0]pcReg;
@@ -23,10 +23,10 @@ wire [31:0]alu_out_next;
 wire [31:0]rs2_data_next;
 
 /* combinational circuit*/
-assign pc_next = (stall)?pcReg:pc_in;
-assign inst_next = (stall)?InstReg:inst_in;
-assign alu_out_next = (stall)?alu_out_Reg:alu_out_in;
-assign rs2_data_next = (stall)?rs2Reg:rs2_rdata_in;
+assign pc_next = (Stall)?pcReg:pc_in;
+assign inst_next = (Stall)?InstReg:inst_in;
+assign alu_out_next = (Stall)?alu_out_Reg:alu_out_in;
+assign rs2_data_next = (Stall)?rs2Reg:rs2_rdata_in;
 
 /* output */
 assign pc_out = pcReg;
@@ -37,7 +37,7 @@ assign rs2_rdata = rs2Reg;
 /* sequencial ciruit */
 always @(posedge clk or posedge rst) begin
     if(rst)begin
-        pcReg <= '{addrWidth'('d0)};
+        pcReg <= {addrWidth{1'b0}};
         InstReg <= 32'd0;
         alu_out_Reg <= 32'd0;
         rs2Reg <= 32'd0;

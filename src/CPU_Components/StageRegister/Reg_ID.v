@@ -20,11 +20,11 @@ wire [31:0]inst_next;
 wire BP_taken_next;
 
 /* combinational circuit*/
-assign pc_next = (stall)?pcReg:
-                 (Flush)?('{addrWidth'('d0)}):pc_in;
-assign inst_next = (stall)?InstReg:
+assign pc_next = (Stall)?pcReg:
+                 (Flush)?({addrWidth{1'b0}}):pc_in;
+assign inst_next = (Stall)?InstReg:
                  (Flush)?(32'd0):inst_in;
-assign BP_taken_next = (stall)?BP_taken_Reg:
+assign BP_taken_next = (Stall)?BP_taken_Reg:
                  (Flush)?(1'd0):BP_taken_in;
 
 /* output */
@@ -35,7 +35,7 @@ assign BP_taken = BP_taken_Reg;
 /* sequencial ciruit */
 always @(posedge clk or posedge rst) begin
     if(rst)begin
-        pcReg <= '{addrWidth'('d0)};
+        pcReg <= {addrWidth{1'b0}};
         InstReg <= 32'd0;
         BP_taken_Reg <= 1'd0;
     end
