@@ -85,13 +85,13 @@ localparam true = 1, false = 0;
 // Control signal - Branch Prediction
 assign E_En = (`EXE_opcode == `BRANCH || `EXE_opcode == `JAL || `EXE_opcode == `JALR ); // Branch Tatget Enable
 wire E_Branch;
-assign E_Branch = (`EXE_opcode == BRANCH)?(
-    (`EXE_funct3 == EQ)? E_BrEq:
-    (`EXE_funct3 == NE)? ~E_BrEq:
-    (`EXE_funct3 == LT)? E_BrLT:
-    (`EXE_funct3 == GE)? ~E_BrLT:
-    (`EXE_funct3 == LTU)? E_BrLT:
-    (`EXE_funct3 == GEU)? ~E_BrLT:false
+assign E_Branch = (`EXE_opcode == `BRANCH)?(
+    (`EXE_funct3 == `EQ)? E_BrEq:
+    (`EXE_funct3 == `NE)? ~E_BrEq:
+    (`EXE_funct3 == `LT)? E_BrLT:
+    (`EXE_funct3 == `GE)? ~E_BrLT:
+    (`EXE_funct3 == `LTU)? E_BrLT:
+    (`EXE_funct3 == `GEU)? ~E_BrLT:false
 ):false;
 
 assign E_Branch_taken = (`EXE_opcode == `BRANCH)?E_Branch:
@@ -100,18 +100,17 @@ assign E_Branch_taken = (`EXE_opcode == `BRANCH)?E_Branch:
 
 // pc predict miss signal
 wire Predict_Miss;
-Predict_Miss = (E_En && ((EXE_BP_taken != E_Branch_taken) || (E_Branch_taken && ID_pc!=EXE_target_pc)));
+assign Predict_Miss = (E_En && ((EXE_BP_taken != E_Branch_taken) || (E_Branch_taken && ID_pc!=EXE_target_pc)));
 
 // Control signal - PC
 wire BP_En;
-assign BP_En = (`IF_opcode == `BRANCH || `IF_opcode == `JAL || `IF_opcode == `JALR ) // Branch Predict Enable
+assign BP_En = (`IF_opcode == `BRANCH || `IF_opcode == `JAL || `IF_opcode == `JALR ); // Branch Predict Enable
 
-assign PCSel = (Predict_Miss)?(
-    (E_Branch_taken)? `EXE_T_PC:`EXE_PC_PLUS_4):(
-    (BP_taken & BP_En)? `IF_P_T_PC:`IF_PC_PLUS_4);
+assign PCSel = (Predict_Miss)?((E_Branch_taken)? `EXE_T_PC:`EXE_PC_PLUS_4):
+                            ((BP_taken & BP_En)? `IF_P_T_PC:`IF_PC_PLUS_4);
 
 // Control signal - Branch comparator
-assign E_BrUn = (`EXE_Inst[13] == 1)true:false;
+assign E_BrUn = (EXE_Inst[13] == 1)?true:false;
 
 // Control signal - Immediate generator
 assign D_ImmSel = (`ID_opcode == `OP_IMM)? `I_type:
@@ -142,7 +141,7 @@ assign E_ALUSel = (`EXE_opcode == `OP)? {`EXE_funct7, 5'b11111, `EXE_funct3}:
 // Memory Cache Access FSM
 localparam sNormal = 2'b00,
            sWait = 2'b01,
-           sIM_Done = 2'b10;
+           sIM_Done = 2'b10,
            sDM_Done = 2'b11;
 
 // cache hand-shake FSM
@@ -182,7 +181,7 @@ assign Mem_state_next = (Mem_state == sNormal)?sNormal_Wait_next:
                         (Mem_state == sDM_Done)?sDM_Done_next:sNormal;
 
 /* sequential circuit */
-always@(posedge clk ot posedge rst)begin
+always@(posedge clk or posedge rst)begin
   if(rst)begin
     Mem_state <= sNormal;
   end
@@ -222,7 +221,7 @@ assign W_reg_en = (`WB_opcode == `OP)? true:
                   (`WB_opcode == `JALR)? true:
                   (`WB_opcode == `JAL)? true:
                   (`WB_opcode == `AUIPC)? true:
-                  (`WB_opcode == `LUI)? true:false;false
+                  (`WB_opcode == `LUI)? true:false;
 
 assign W_RegWEn = (Stall_MA)?false:W_reg_en;
 
@@ -289,17 +288,17 @@ wire is_E_rs2_W_rd_overlap;
 wire is_D_rs1_W_rd_overlap;
 wire is_D_rs2_W_rd_overlap;
 
-assign  is_D_rs1_E_rd_overlap_in_load = (is_D_use_rs1 && (EXE_opcode == LOAD) && (ID_rs1 == EXE_rd) && (EXE_rd != 5'd0))?true:false;
-assign  is_D_rs2_E_rd_overlap_in_load = (is_D_use_rs2 && (EXE_opcode == LOAD) && (ID_rs2 == EXE_rd) && (EXE_rd != 5'd0))?true:false;
+assign  is_D_rs1_E_rd_overlap_in_load = (is_D_use_rs1 && (`EXE_opcode == `LOAD) && (`ID_rs1 == `EXE_rd) && (`EXE_rd != 5'd0))?true:false;
+assign  is_D_rs2_E_rd_overlap_in_load = (is_D_use_rs2 && (`EXE_opcode == `LOAD) && (`ID_rs2 == `EXE_rd) && (`EXE_rd != 5'd0))?true:false;
 
-assign  is_E_rs1_M_rd_overlap = (is_E_use_rs1 && is_M_use_rd && (EXE_rs1 == MEM_rd) && (MEM_rd != 5'd0))?true:false;
-assign  is_E_rs2_M_rd_overlap = (is_E_use_rs2 && is_M_use_rd && (EXE_rs2 == MEM_rd) && (MEM_rd != 5'd0))?true:false;
+assign  is_E_rs1_M_rd_overlap = (is_E_use_rs1 && is_M_use_rd && (`EXE_rs1 == `MEM_rd) && (`MEM_rd != 5'd0))?true:false;
+assign  is_E_rs2_M_rd_overlap = (is_E_use_rs2 && is_M_use_rd && (`EXE_rs2 == `MEM_rd) && (`MEM_rd != 5'd0))?true:false;
 
-assign  is_E_rs1_W_rd_overlap = (is_E_use_rs1 && is_W_use_rd && (EXE_rs1 == WB_rd) && (WB_rd != 5'd0))?true:false;
-assign  is_E_rs2_W_rd_overlap = (is_E_use_rs2 && is_W_use_rd && (EXE_rs2 == WB_rd) && (WB_rd != 5'd0))?true:false;
+assign  is_E_rs1_W_rd_overlap = (is_E_use_rs1 && is_W_use_rd && (`EXE_rs1 == `WB_rd) && (`WB_rd != 5'd0))?true:false;
+assign  is_E_rs2_W_rd_overlap = (is_E_use_rs2 && is_W_use_rd && (`EXE_rs2 == `WB_rd) && (`WB_rd != 5'd0))?true:false;
 
-assign  is_D_rs1_W_rd_overlap = (is_D_use_rs1 && is_W_use_rd && (ID_rs1 == WB_rd) && (WB_rd != 5'd0))?true:false;
-assign  is_D_rs2_W_rd_overlap = (is_D_use_rs2 && is_W_use_rd && (ID_rs2 == WB_rd) && (WB_rd != 5'd0))?true:false;
+assign  is_D_rs1_W_rd_overlap = (is_D_use_rs1 && is_W_use_rd && (`ID_rs1 == `WB_rd) && (`WB_rd != 5'd0))?true:false;
+assign  is_D_rs2_W_rd_overlap = (is_D_use_rs2 && is_W_use_rd && (`ID_rs2 == `WB_rd) && (`WB_rd != 5'd0))?true:false;
 
 // WB Hazard (rs2, rs1) - to stage Reg
 assign  W_wb_data_hazard = {is_D_rs2_W_rd_overlap,is_D_rs1_W_rd_overlap};

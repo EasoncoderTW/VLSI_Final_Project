@@ -2,8 +2,8 @@ module BranchComp (
     input BrUn,
     input [31:0] src1,
     input [31:0] src2,
-    output wire BrEq;
-    output wire BrLT;
+    output wire BrEq,
+    output wire BrLT
 );
 
 wire lt_wire;

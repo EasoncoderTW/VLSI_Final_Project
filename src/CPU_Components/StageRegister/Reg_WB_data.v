@@ -1,11 +1,11 @@
-module Reg_WB #(parameter addrWidth = 15)( 
+module Reg_WB_data #(parameter addrWidth = 15)( 
     input clk, 
     input rst,
     input Stall,
     input [1:0]WB_Hazard_in, 
     input [31:0]wb_data_in, 
     output wire [1:0]WB_Hazard,
-    output wire [31:0]wb_data,
+    output wire [31:0]wb_data
 );
 
 reg [1:0]WB_Hazard_Reg;
@@ -15,8 +15,8 @@ wire [1:0]WB_Hazard_next;
 wire [31:0]wb_data_next;
 
 /* combinational circuit*/
-assign WB_Hazard_next = (stall)?WB_Hazard_Reg:WB_Hazard_in;
-assign wb_data_next = (stall)?wb_data_Reg:wb_data_in;
+assign WB_Hazard_next = (Stall)?WB_Hazard_Reg:WB_Hazard_in;
+assign wb_data_next = (Stall)?wb_data_Reg:wb_data_in;
 
 /* output */
 assign WB_Hazard = WB_Hazard_next;
