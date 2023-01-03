@@ -2,10 +2,11 @@
 test: .word 865468 -7623579 185 47443
 
 .text
-addi sp sp -4
-sw ra 0(sp) 
-# t6  store pointer
-lui  t6 0xC
+    	li sp 0xFFFC
+	addi sp sp -4
+	sw ra 0(sp) 
+	# t6  store pointer
+	lui  t6 0xC
 test_jal:
 	addi x1 x0 0 
 	jal x1 store_jal_result

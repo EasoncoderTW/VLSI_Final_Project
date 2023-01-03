@@ -3,23 +3,24 @@
 .data
 
 .text
-addi sp sp -8
-sw ra 4(sp) 
-sw s0 0(sp)
-# t6  store pointer
-lui  t6 0xA
-addi t0 x0 1 
-addi t1 x0 1 
-#do 30 times
-addi t5 x0 30   
-sw t0 0(t6)  
-addi t6 t6 4 
-#t4 = counter
-addi t4 x0 2  
-sw t1 0(t6) 
-beq t4 t5 exit 
-# x1 as rd 
-jal x1 fib_loop 
+    	li sp 0xFFFC
+	addi sp sp -8
+	sw ra 4(sp) 
+	sw s0 0(sp)
+	# t6  store pointer
+	lui  t6 0xA
+	addi t0 x0 1 
+	addi t1 x0 1 
+	#do 30 times
+	addi t5 x0 30   
+	sw t0 0(t6)  
+	addi t6 t6 4 
+	#t4 = counter
+	addi t4 x0 2  
+	sw t1 0(t6) 
+	beq t4 t5 exit 
+	# x1 as rd 
+	jal x1 fib_loop 
 
 jal x0 exit
 fib_loop:
