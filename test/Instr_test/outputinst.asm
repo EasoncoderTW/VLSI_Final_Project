@@ -15,7 +15,7 @@ addi t6, t6, 4
 sw t2, 0(t6)
 addi t6, t6, 4
 sw t2, 0(t6)
-jal halt
+jal exit
 sw x1, 0(t6)
 addi t6, t6, 4
 sw x0, 0(t6)
@@ -216,5 +216,4 @@ sw t2, 0(t6)
 jal exit
 lw ra, 0(sp)
 addi sp, sp, 4
-jal halt
 hcf

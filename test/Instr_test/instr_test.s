@@ -23,7 +23,7 @@ _error:
 	sw t2 0(t6)
 	addi t6 t6 4
 	sw t2 0(t6)	
-	jal halt
+	jal exit
 store_jal_result:
 	#jal has no error
 	#14
@@ -51,7 +51,7 @@ go_back:
 	addi t6 t6 4
 	#as ==================
 	sw x0 0(t6)
-	jalr x0 x1 0
+	jalr x0 0(x1)
 
 test_lb_lh_sb_sh_blt:
 	la t4 test
@@ -320,8 +320,9 @@ error:
 exit:
 	lw ra 0(sp)
 	addi sp sp 4 
-	jal halt
-
-halt:
-	ret
+	hcf
+	hcf
+	hcf
+	hcf
+	hcf
 	
