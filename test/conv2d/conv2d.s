@@ -10,7 +10,7 @@ KER_SIZE: .word 3
 #conv2d for fixed kernel size and IFM size
 #both integer and weight is less than 256
 conv2d:
-    li sp 0xFFFC
+    li sp 0x10000
     #a5 p_sum(conv)
     #s1 change of addr when x add 1(IFM)
     #s2 change of addr when x add 1(WEI)

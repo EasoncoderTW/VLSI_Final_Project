@@ -10,7 +10,7 @@ _answer: .word 0
 .text
 
 main:
-    li sp, 0xFFFC
+    li sp, 0x10000
     addi  sp, sp ,-4
     sw s0, 0(sp)
     la s0, _answer

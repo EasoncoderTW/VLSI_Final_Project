@@ -1,5 +1,5 @@
-lui x02, 0x0000000f
-addi x02, x02, 0x00000ffc
+lui x02, 0x00000010
+addi x02, x02, 0x00000000
 addi sp, sp, -4
 sw ra, 0(sp)
 lui t6, 0xc

@@ -2,7 +2,7 @@
 test: .word 865468 -7623579 185 47443
 
 .text
-    	li sp 0xFFFC
+    	li sp 0x10000
 	addi sp sp -4
 	sw ra 0(sp) 
 	# t6  store pointer

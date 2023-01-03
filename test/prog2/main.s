@@ -15,7 +15,7 @@ _answer: .word 0
 
 .text
 
-    li sp 0xFFFC
+    li sp 0x10000
 main:
     addi  sp, sp ,-4
     sw s0, 0(sp)

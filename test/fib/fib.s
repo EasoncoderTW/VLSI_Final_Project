@@ -3,7 +3,7 @@
 .data
 
 .text
-    	li sp 0xFFFC
+    	li sp 0x10000
 	addi sp sp -8
 	sw ra 4(sp) 
 	sw s0 0(sp)
