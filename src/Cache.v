@@ -28,7 +28,7 @@ module Cache(
     input [15:0] address,
     input [31:0] write_data,
     output [31:0] read_data,
-    output ready,
+    output valid,
     /* AXI Lite 4 IO */
     // read port
     output  [31:0]  readAddr_addr,
@@ -106,7 +106,7 @@ Cache_Controller Cache_Controller(
     .writeResp_msg(writeResp_msg),
     .readAddr_valid(readAddr_valid), .readData_ready(readData_ready), //output
     .writeAddr_valid(writeAddr_valid), .writeData_valid(writeData_valid), .writeResp_ready(writeResp_ready), 
-    .dataram_sel(dataram_sel), .p_ready(ready), .w_tagram(w_tagram), .w_validram(w_validram), .w_dataram(w_dataram), .validin(validin)
+    .dataram_sel(dataram_sel), .p_ready(valid), .w_tagram(w_tagram), .w_validram(w_validram), .w_dataram(w_dataram), .validin(validin)
     );
 
 Data16Mux Data16Mux(.sel(dataram_sel), .A(cache_line_strb), .B(16'hffff), .out(dataram_strb));
