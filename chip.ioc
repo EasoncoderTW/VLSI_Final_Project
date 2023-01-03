@@ -1,0 +1,29 @@
+Version: 1
+Pad: CORNER0              NW PCORNER
+Pad: PAD_IOVDD1           N  PVDD2DGZ
+Pad: PAD_COREVDD1         N  PVDD1DGZ
+Pad: PAD_clk              N
+Pad: PAD_reset            N
+Pad: PAD_COREVSS1         N  PVSS1DGZ
+Pad: PAD_IOVSS1           N  PVSS2DGZ
+
+Pad: CORNER1              NE PCORNER
+Pad: PAD_IOVDD2           E  PVDD2DGZ
+Pad: PAD_COREVDD2         E  PVDD1DGZ
+Pad: PAD_Red              E
+Pad: PAD_COREVSS2         E  PVSS1DGZ
+Pad: PAD_IOVSS2           E  PVSS2DGZ
+
+Pad: CORNER2              SE PCORNER
+Pad: PAD_IOVDD3           S  PVDD2DGZ
+Pad: PAD_CORNERVDD3       S  PVDD1DGZ
+Pad: PAD_Green            S
+Pad: PAD_COREVSS3         S  PVSS1DGZ
+Pad: PAD_IOVSS3           S  PVSS2DGZ
+
+Pad: CORNER3              SW PCORNER
+Pad: PAD_IOVDD4           W  PVDD2DGZ
+Pad: PAD_COREVDD4         W  PVDD1DGZ
+Pad: PAD_Yellow           W
+Pad: PAD_COREVSS4         W  PVSS1DGZ
+Pad: PAD_IOVSS4           W  PVSS2DGZ
