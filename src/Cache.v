@@ -114,7 +114,7 @@ Data16Mux Data16Mux(.sel(dataram_sel), .A(cache_line_strb), .B(16'hffff), .out(d
 
 // DataRam flow out a cache line in one read
 // Thus, we have to choose which word to flow into our processor
-assign dataout = (readData_valid) ? readData_data : dataram_dataout;
+assign dataout = (readData_valid == 1'b1) ? readData_data : dataram_dataout;
 Data32Mux4to1 Data32Mux4to1(
     .sel(address[3:2]), 
     .A(dataout[31:0]), 
