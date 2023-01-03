@@ -1,4 +1,4 @@
-lui x02, 0x00000008
+lui x02, 0x00000010
 addi x02, x02, 0x00000000
 addi sp, sp, -4
 sw s0, 0(sp)
