@@ -4,9 +4,9 @@
 
 .text
     	li sp 0x10000
-	addi sp sp -8
-	sw ra 4(sp) 
-	sw s0 0(sp)
+	#addi sp sp -8
+	#sw ra 4(sp) 
+	#sw s0 0(sp)
 	# t6  store pointer
 	lui  t6 0xA
 	addi t0 x0 1 
@@ -50,15 +50,16 @@ go_back:
 	addi t6 t6 4
 	#as ==================
 	sw x0 0(t6)
-	jalr x0 0(x1)
+	jalr x0 x1 0
 
 exit:
-	lw s0 0(sp)
-	lw ra 4(sp)
-	addi sp sp 4 
-	hcf
-	hcf
-	hcf
-	hcf
-	hcf
+	beq x0 x0 -4
+	#lw s0 0(sp)
+	#lw ra 4(sp)
+	#addi sp sp 8 
+	#hcf
+	#hcf
+	#hcf
+	#hcf
+	#hcf
 	

@@ -17,8 +17,8 @@ _answer: .word 0
 
     li sp 0x10000
 main:
-    addi  sp, sp ,-4
-    sw s0, 0(sp)
+    #addi  sp, sp ,-4
+    #sw s0, 0(sp)
     la s0, _answer
     
     # Collee save
@@ -716,8 +716,8 @@ exit_conv2d:
 
 main_exit:
     #/* Simulation End */
-    lw s0, 0(sp)
-    addi sp, sp, 4
+    #lw s0, 0(sp)
+    #addi sp, sp, 4
     
     # halt the cpu
     hcf

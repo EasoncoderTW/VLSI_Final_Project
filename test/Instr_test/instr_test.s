@@ -2,7 +2,7 @@
 test: .word 865468 -7623579 185 47443
 
 .text
-    	li sp 0x10000
+    li sp 0x10000
 	addi sp sp -4
 	sw ra 0(sp) 
 	# t6  store pointer
@@ -24,7 +24,7 @@ _error:
 	sw t2 0(t6)
 	addi t6 t6 4
 	sw t2 0(t6)	
-	jal exit
+	jal x1 exit
 store_jal_result:
 	#jal has no error
 	#14
@@ -52,7 +52,7 @@ go_back:
 	addi t6 t6 4
 	#as ==================
 	sw x0 0(t6)
-	jalr x0 0(x1)
+	jalr x0 x1 0
 
 test_lb_lh_sb_sh_blt:
 	la t4 test
@@ -75,7 +75,7 @@ test_lb_lh_sb_sh_blt:
 	blt t1 t2 error
 	# correct
 	blt t2 t1 go_back 
-	jal error
+	jal x0 error
 test_blt_equal:
 	# there are some error 
 	blt t1 t1 error
@@ -96,7 +96,7 @@ test_add_addi_beq:
 	beq t1 t2 error
 	li t2 33
 	beq t1 t2 go_back
-	jal error
+	jal x0 error
 
 test_bne:
 	li t1 33
@@ -105,7 +105,7 @@ test_bne:
 	bne t1 t2 error
 	# will store 0x0080
 	bne t1 t3 pass 
-	jal error
+	jal x0 error
 pass:
 	li t2 2048
 	addi t6 t6 4
@@ -127,11 +127,11 @@ test_lbu_lhu_bge:
 	bge t1 t2 error
 	# correct
 	bge t2 t1 go_back 
-	jal error
+	jal x0 error
 test_bge_equal:
 	#check if there are some error 
 	bge t1 t1 go_back
-	jal error
+	jal x0 error
 
 test_sub_sll_srl_sra_bltu:
 
@@ -163,12 +163,12 @@ test_sub_sll_srl_sra_bltu:
 	bltu t2 t1 error
 	#correct
 	bltu t1 t2 go_back
-	jal error
+	jal x0 error
 test_bltu_equal:
 	# there are some error 
 	bltu t1 t1 error
 	# no error
-	jal go_back
+	jal x0 go_back
 
 test_xori_slli_srli_srai:
 
@@ -194,7 +194,7 @@ test_xori_slli_srli_srai:
 	#29
 	sw t2 0(t6)
 	bltu t2 t1 go_back
-	jal error
+	jal x0 error
 
 test_or_and_xor_slt_sltu:
 
@@ -235,7 +235,7 @@ test_or_and_xor_slt_sltu:
 	#1
 	sw t3 0(t6)
 	bltu t3 t1 go_back
-	jal error
+	jal x0 error
 
 test_andi_ori_slti_sltiu_bgeu:
 
@@ -280,12 +280,12 @@ test_andi_ori_slti_sltiu_bgeu:
 	bgeu t2 t1 error
 	#correct
 	bgeu t1 t2 go_back
-	jal error
+	jal x0 error
 test_bgeu_equal:
 	# there are some error 
 	bgeu t1 t1 go_back
 	# no error
-	jal error
+	jal x0 error
 
 test_lui_auipc:
 
@@ -300,7 +300,7 @@ test_lui_auipc:
 	#3092F8
 	sw t2 0(t6)
 	bgeu t2 t1 go_back
-	jal error
+	jal x0 error
 
 
 error:
@@ -316,14 +316,15 @@ error:
 	sw t2 0(t6)
 	addi t6 t6 4
 	sw t2 0(t6)
-	jal exit
+	jal x0 exit
 
 exit:
-	lw ra 0(sp)
-	addi sp sp 4 
-	hcf
-	hcf
-	hcf
-	hcf
-	hcf
+	beq x0 x0 -4 
+	#lw ra 0(sp)
+	#addi sp sp 4 
+	#hcf
+	#hcf
+	#hcf
+	#hcf
+	#hcf
 	

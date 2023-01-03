@@ -14,18 +14,18 @@ conv2d:
     #a5 p_sum(conv)
     #s1 change of addr when x add 1(IFM)
     #s2 change of addr when x add 1(WEI)
-    addi  sp, sp ,-44
-    sw ra, 0(sp)
-    sw s1, 4(sp)
-    sw s2, 8(sp)
-    sw s4, 12(sp)
-    sw s5, 16(sp)
-    sw s6, 20(sp)
-    sw s7, 24(sp)
-    sw s8, 28(sp)
-    sw s9, 32(sp)
-    sw s10, 36(sp)
-    sw s11, 40(sp)
+    #addi  sp, sp ,-44
+    #sw ra, 0(sp)
+    #sw s1, 4(sp)
+    #sw s2, 8(sp)
+    #sw s4, 12(sp)
+    #sw s5, 16(sp)
+    #sw s6, 20(sp)
+    #sw s7, 24(sp)
+    #sw s8, 28(sp)
+    #sw s9, 32(sp)
+    #sw s10, 36(sp)
+    #sw s11, 40(sp)
     la t1 IFM_SIZE
     lw t1 0(t1)
     add a1 x0 t1
@@ -136,18 +136,18 @@ add_to_psum:
 
 exit_conv2d:
     ##restore reg 
-    lw ra, 0(sp)
-    lw s1, 4(sp)
-    lw s2, 8(sp)
-    lw s4, 12(sp)
-    lw s5, 16(sp)
-    lw s6, 20(sp)
-    lw s7, 24(sp)
-    lw s8, 28(sp)
-    lw s9, 32(sp)
-    lw s10, 36(sp)
-    lw s11, 40(sp)
-    addi sp, sp ,-44
+    #lw ra, 0(sp)
+    #lw s1, 4(sp)
+    #lw s2, 8(sp)
+    #lw s4, 12(sp)
+    #lw s5, 16(sp)
+    #lw s6, 20(sp)
+    #lw s7, 24(sp)
+    #lw s8, 28(sp)
+    #lw s9, 32(sp)
+    #lw s10, 36(sp)
+    #lw s11, 40(sp)
+    #addi sp, sp ,44
 
     hcf
     hcf
