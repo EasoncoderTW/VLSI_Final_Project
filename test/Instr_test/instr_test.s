@@ -52,7 +52,7 @@ go_back:
 	addi t6 t6 4
 	#as ==================
 	sw x0 0(t6)
-	jalr x0 x1 0
+	jalr x0 0
 
 test_lb_lh_sb_sh_blt:
 	la t4 test
@@ -319,12 +319,12 @@ error:
 	jal x0 exit
 
 exit:
-	beq x0 x0 -4 
+	#beq x0 x0 -4 
 	#lw ra 0(sp)
 	#addi sp sp 4 
-	#hcf
-	#hcf
-	#hcf
-	#hcf
-	#hcf
+	hcf
+	hcf
+	hcf
+	hcf
+	hcf
 	

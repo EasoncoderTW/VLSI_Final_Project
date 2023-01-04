@@ -121,8 +121,8 @@ copy_loop:
     lw    s3, 0(sp)   
     # MEM[@sp-16] -> @s3
     addi  sp, sp, 16
-    jal fib_and_instest
-    jal conv2d
+    jal ra fib_and_instest
+    jal ra conv2d
     jal x0 main_exit
 
     
