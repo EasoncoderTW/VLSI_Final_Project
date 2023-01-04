@@ -3,10 +3,10 @@
 .data
 
 .text
-    	li sp 0x10000
-	addi sp sp -8
-	sw ra 4(sp) 
-	sw s0 0(sp)
+    li sp 0x10000
+	#addi sp sp -8
+	#sw ra 4(sp) 
+	#sw s0 0(sp)
 	# t6  store pointer
 	lui  t6 0xA
 	addi t0 x0 1 
@@ -28,6 +28,7 @@ fib_loop:
 	addi t4 t4 1 
 	#  t2 = t1 + t2
 	add t2 t1 t0  
+	nop
 	sw t2 0(t6) 
 	#  t4 ==t5 then target
 	beq t4 t5 go_back  
@@ -35,12 +36,14 @@ fib_loop:
 	addi t4 t4 1 
 	#  t1 = t1 + t2
 	add t0 t2 t1  
+	nop
 	sw t0 0(t6) 
 	beq t4 t5 go_back  
 	addi t6 t6 4 
 	addi t4 t4 1 
 	#  t2 = t1 + t2
 	add t1 t0 t2  
+	nop
 	sw t1 0(t6) 
 	beq t4 t5 go_back 
 	# loop ---
@@ -48,14 +51,16 @@ fib_loop:
 
 go_back:
 	addi t6 t6 4
+	nop
 	#as ==================
 	sw x0 0(t6)
-	jalr x0 0(x1)
+	jalr x0 0
 
 exit:
-	lw s0 0(sp)
-	lw ra 4(sp)
-	addi sp sp 4 
+	#beq x0 x0 -4
+	#lw s0 0(sp)
+	#lw ra 4(sp)
+	#addi sp sp 8 
 	hcf
 	hcf
 	hcf

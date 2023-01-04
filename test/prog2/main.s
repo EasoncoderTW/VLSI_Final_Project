@@ -17,8 +17,8 @@ _answer: .word 0
 
     li sp 0x10000
 main:
-    addi  sp, sp ,-4
-    sw s0, 0(sp)
+    #addi  sp, sp ,-4
+    #sw s0, 0(sp)
     la s0, _answer
     
     # Collee save
@@ -121,8 +121,8 @@ copy_loop:
     lw    s3, 0(sp)   
     # MEM[@sp-16] -> @s3
     addi  sp, sp, 16
-    jal fib_and_instest
-    jal conv2d
+    jal ra fib_and_instest
+    jal ra conv2d
     jal x0 main_exit
 
     
@@ -716,8 +716,8 @@ exit_conv2d:
 
 main_exit:
     #/* Simulation End */
-    lw s0, 0(sp)
-    addi sp, sp, 4
+    #lw s0, 0(sp)
+    #addi sp, sp, 4
     
     # halt the cpu
     hcf
