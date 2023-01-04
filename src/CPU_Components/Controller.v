@@ -20,7 +20,7 @@
 `define WB_opcode  WB_Inst[6:0]
 `define WB_rd      WB_Inst[11:7]
 
-module Controller #(parameter memAddrWidth = 15)(
+module Controller #(parameter memAddrWidth = 16)(
     input clk,
     input rst,
 

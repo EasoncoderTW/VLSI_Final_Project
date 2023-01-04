@@ -17,7 +17,7 @@
 `include "./CPU_Components/StageRegister/Reg_WB.v"
 `include "./CPU_Components/StageRegister/Reg_WB_data.v"
 
-module CPU #(parameter memAddrWidth = 15)(
+module CPU #(parameter memAddrWidth = 16)(
     input clk,
     input rst,
     // Inst Cache - AXI Lite 4 master IO
@@ -327,7 +327,7 @@ Reg_WB #(.addrWidth(memAddrWidth)) stage_WB(
     .clk(clk),
     .rst(rst),
     .Stall(Stall_MA|Hcf),
-    .pc_plus4_in(MEM_pc + {{(memAddrWidth-3){1'b0}},3'd4}),
+    .pc_plus4_in(MEM_pc + {{(memAddrWidth-3){1'b0}},3'b100}),
     .inst_in(MEM_Inst),
     .alu_out_in(MEM_alu_out), 
     .ld_data_in(dm_cache_read_data), 

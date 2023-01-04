@@ -1,4 +1,4 @@
-module Reg_ID #(parameter addrWidth = 15)( 
+module Reg_ID #(parameter addrWidth = 16)( 
     input clk, 
     input rst,
     input Flush,

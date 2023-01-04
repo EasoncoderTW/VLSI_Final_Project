@@ -1,4 +1,4 @@
-module Reg_WB_data #(parameter addrWidth = 15)( 
+module Reg_WB_data #(parameter addrWidth = 16)( 
     input clk, 
     input rst,
     input Stall,

@@ -18,8 +18,8 @@ wire [addrWidth-1:0] pc_next;
 wire [addrWidth-1:0] pc_plus_4;
 wire [addrWidth-1:0] EXE_pc_plus_4;
 /* combinational circuit */
-assign pc_plus_4 = (pcReg + 4);
-assign EXE_pc_plus_4 = (EXE_pc + 4);
+assign pc_plus_4 = (pcReg + {{(addrWidth-3){1'b0}},3'b100});
+assign EXE_pc_plus_4 = (EXE_pc + {{(addrWidth-3){1'b0}},3'b100});
 
 assign pc_next = (Hcf | Stall)? pcReg:
                  (PCSel == `IF_P_T_PC)? Predict_Target_pc:
