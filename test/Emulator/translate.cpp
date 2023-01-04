@@ -424,10 +424,9 @@ void translate_to_machine_code(uint8_t *mem, instr *imem, char *argv1)
 
 			offset = i.a2.imm - (inst_cnt << 2);
 
-			binary += (offset & 0xFF000);		 // imm[19:12] -> inst[19:12]
-			binary += (offset & 0x800) >> 4;	 // imm[11] -> inst[7]
-			binary += (offset & 0x800) << 9;	 // imm[11] -> inst[20]
-			binary += (offset & 0x7FE) << 20;	 // imm[10:1] -> inst[30:21]
+			binary += (offset & 0xFF000); // imm[19:12] -> inst[19:12]
+			binary += (offset & 0x800) << 9; // imm[11] -> inst[20]
+			binary += (offset & 0x7FE) << 20; // imm[10:1] -> inst[30:21]
 			binary += (offset & 0x100000) << 11; // imm[20] -> inst[31]
 			break;
 		case JALR:

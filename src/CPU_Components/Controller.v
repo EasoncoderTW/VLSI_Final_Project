@@ -136,8 +136,8 @@ assign E_BSel = (`EXE_opcode == `OP)? 1'b0:
 assign E_ALUSel = (`EXE_opcode == `OP)? {`EXE_funct7, 5'b11111, `EXE_funct3}:
                   (`EXE_opcode == `OP_IMM)? (
                     (`EXE_funct3 == 3'b001 || `EXE_funct3 == 3'b101)?(
-                        {7'd0, 5'b11111, `EXE_funct3}
-                    ):{`EXE_funct7, 5'b11111, `EXE_funct3}
+                        {`EXE_funct7, 5'b11111, `EXE_funct3}
+                    ):{7'd0, 5'b11111, `EXE_funct3}
                   ):{7'd0, 5'b11111, 3'd0};
 
 // Memory Cache Access FSM
@@ -197,7 +197,7 @@ wire stall_ma_1, stall_ma_2, stall_ma_3, stall_ma_4;
 assign stall_ma_1 = (Mem_state == sNormal && (~IM_Done || ~DM_Done))?true:false;
 assign stall_ma_2 = (Mem_state == sWait && (~IM_Done || ~DM_Done))?true:false;
 assign stall_ma_3 = (Mem_state == sDM_Done && (~IM_Done))?true:false;
-assign stall_ma_4 = (Mem_state == DM_Done && (~IM_Done))?true:false;
+assign stall_ma_4 = (Mem_state == sIM_Done && (~DM_Done))?true:false;
 assign Stall_MA = (stall_ma_1 | stall_ma_2 | stall_ma_3| stall_ma_4);
 
 // Control signal - Data Memory
@@ -232,7 +232,7 @@ assign W_WBSel = (`WB_opcode == `LOAD)? `LD_DATA:
                  (`WB_opcode == `JAL)? `PC_PLUS_4:`ALUOUT;
 
 // Control signal - Others
-assign Hcf = (`IF_opcode == `HCF)?true:false;
+assign Hcf = (`WB_opcode == `HCF)?true:false;
 
 /****************** Data Hazard ******************/
 

@@ -19,8 +19,8 @@ assign WB_Hazard_next = (Stall)?WB_Hazard_Reg:WB_Hazard_in;
 assign wb_data_next = (Stall)?wb_data_Reg:wb_data_in;
 
 /* output */
-assign WB_Hazard = WB_Hazard_next;
-assign wb_data = wb_data_next;
+assign WB_Hazard = WB_Hazard_Reg;
+assign wb_data = wb_data_Reg;
 
 /* sequencial ciruit */
 always @(posedge clk or posedge rst) begin

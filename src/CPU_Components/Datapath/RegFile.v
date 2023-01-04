@@ -12,7 +12,7 @@ module RegFile(
 reg [31:0] registers [0:31];
 
 always @(posedge clk ) begin
-    if(wb_en)begin
+    if(wb_en && rd_index != 5'd0)begin
         registers[rd_index] <= wb_data;
     end
 end

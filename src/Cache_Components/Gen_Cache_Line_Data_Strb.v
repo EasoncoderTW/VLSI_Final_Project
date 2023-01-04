@@ -7,7 +7,8 @@ input [`WORD-1:0] write_data; // the data from the processor
 output reg [`CACHE_LINE_BIT_LENGTH-1:0] cache_line_data;
 output reg [`CACHE_LINE_SIZE-1:0] cache_line_strb;
 
-wire mask = {{8{p_w_en[3]}}, {8{p_w_en[2]}}, {8{p_w_en[1]}}, {8{p_w_en[0]}}};
+wire [`WORD-1:0]mask;
+assign mask = {{8{p_w_en[3]}}, {8{p_w_en[2]}}, {8{p_w_en[1]}}, {8{p_w_en[0]}}};
 
 // generate cache_line_data & cache_line_strb
 always@(*)begin
