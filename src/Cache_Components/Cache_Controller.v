@@ -30,13 +30,13 @@ output reg w_tagram,            // signal to enable RAMs write operation.
            w_dataram;
 output reg validin;             // valid signal to update validram 
 
-parameter S_IDLE_READ_HIT                = 0,
-          S_READ_MISS                    = 1, 
-          S_READ_SYS_UPD_CACHE           = 2,
-          S_WRITE_HIT                    = 3,
-          S_WRITE_MISS                   = 4,
-          S_WRITE_SYS                    = 5,
-          S_WRITE_SYS_UPD_CACHE          = 6;
+parameter S_IDLE_READ_HIT                = 3'b000,
+          S_READ_MISS                    = 3'b001, 
+          S_READ_SYS_UPD_CACHE           = 3'b010,
+          S_WRITE_HIT                    = 3'b011,
+          S_WRITE_MISS                   = 3'b100,
+          S_WRITE_SYS                    = 3'b101,
+          S_WRITE_SYS_UPD_CACHE          = 3'b110;
 
 // declare reg
 reg [2:0] StateReg, 
