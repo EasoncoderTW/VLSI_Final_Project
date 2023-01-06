@@ -1,29 +1,61 @@
 Version: 1
-Pad: CORNER0              NW PCORNER
-Pad: PAD_IOVDD1           N  PVDD2DGZ
-Pad: PAD_COREVDD1         N  PVDD1DGZ
-Pad: PAD_clk              N
-Pad: PAD_reset            N
-Pad: PAD_COREVSS1         N  PVSS1DGZ
-Pad: PAD_IOVSS1           N  PVSS2DGZ
+Pad: CORNER0                         NW PCORNER
+Pad: PAD_IOVDD1                      N  PVDD2DGZ
+Pad: PAD_COREVDD1                    N  PVDD1DGZ
+Pad: PAD_Inst_Cahe_readAddr_addr     N
+Pad: PAD_Inst_Cahe_readAddr_valid    N
+Pad: PAD_Inst_Cahe_readData_ready    N
+Pad: PAD_Inst_Cahe_writeAddr_addr    N
+Pad: PAD_Inst_Cahe_writeAddr_valid   N
+Pad: PAD_Inst_Cahe_writeData_data    N
+Pad: PAD_Inst_Cahe_writeData_strb    N
+Pad: PAD_Inst_Cahe_writeData_valid   N
+Pad: PAD_Inst_Cahe_writeResp_ready   N
+Pad: PAD_clk                         N
+Pad: PAD_rst                         N
+Pad: PAD_halt                        N
+Pad: PAD_COREVSS1                    N  PVSS1DGZ
+Pad: PAD_IOVSS1                      N  PVSS2DGZ
 
-Pad: CORNER1              NE PCORNER
-Pad: PAD_IOVDD2           E  PVDD2DGZ
-Pad: PAD_COREVDD2         E  PVDD1DGZ
-Pad: PAD_Red              E
-Pad: PAD_COREVSS2         E  PVSS1DGZ
-Pad: PAD_IOVSS2           E  PVSS2DGZ
+Pad: CORNER1                         NE PCORNER
+Pad: PAD_IOVDD2                      E  PVDD2DGZ
+Pad: PAD_COREVDD2                    E  PVDD1DGZ
+Pad: PAD_Inst_Cahe_readAddr_addr     E
+Pad: PAD_Inst_Cahe_readAddr_valid    E
+Pad: PAD_Inst_Cahe_readData_ready    E
+Pad: PAD_Inst_Cahe_writeAddr_addr    E
+Pad: PAD_Inst_Cahe_writeAddr_valid   E
+Pad: PAD_Inst_Cahe_writeData_data    E
+Pad: PAD_Inst_Cahe_writeData_strb    E
+Pad: PAD_Inst_Cahe_writeData_valid   E
+Pad: PAD_Inst_Cahe_writeResp_ready   E
+Pad: PAD_COREVSS2                    E  PVSS1DGZ
+Pad: PAD_IOVSS2                      E  PVSS2DGZ
 
-Pad: CORNER2              SE PCORNER
-Pad: PAD_IOVDD3           S  PVDD2DGZ
-Pad: PAD_CORNERVDD3       S  PVDD1DGZ
-Pad: PAD_Green            S
-Pad: PAD_COREVSS3         S  PVSS1DGZ
-Pad: PAD_IOVSS3           S  PVSS2DGZ
+Pad: CORNER2                         SE PCORNER
+Pad: PAD_IOVDD3                      S  PVDD2DGZ
+Pad: PAD_CORNERVDD3                  S  PVDD1DGZ
+Pad: PAD_Data_Cahe_readAddr_ready    S
+Pad: PAD_Data_Cahe_readData_data     S
+Pad: PAD_Data_Cahe_readData_valid    S
+Pad: PAD_Data_Cahe_writeAddr_ready   S
+Pad: PAD_Data_Cahe_writeData_ready   S
+Pad: PAD_Data_Cahe_writeResp_msg     S
+Pad: PAD_Data_Cahe_writeResp_valid   S
+Pad: PAD_COREVSS3                    S  PVSS1DGZ
+Pad: PAD_IOVSS3                      S  PVSS2DGZ
 
-Pad: CORNER3              SW PCORNER
-Pad: PAD_IOVDD4           W  PVDD2DGZ
-Pad: PAD_COREVDD4         W  PVDD1DGZ
-Pad: PAD_Yellow           W
-Pad: PAD_COREVSS4         W  PVSS1DGZ
-Pad: PAD_IOVSS4           W  PVSS2DGZ
+Pad: CORNER3                         SW PCORNER
+Pad: PAD_IOVDD4                      W  PVDD2DGZ
+Pad: PAD_COREVDD4                    W  PVDD1DGZ
+Pad: PAD_Data_Cahe_readAddr_addr     W
+Pad: PAD_Data_Cahe_readAddr_valid    W
+Pad: PAD_Data_Cahe_readData_ready    W
+Pad: PAD_Data_Cahe_writeAddr_addr    W
+Pad: PAD_Data_Cahe_writeAddr_valid   W
+Pad: PAD_Data_Cahe_writeData_data    W
+Pad: PAD_Data_Cahe_writeData_strb    W
+Pad: PAD_Data_Cahe_writeData_valid   W
+Pad: PAD_Data_Cahe_writeResp_ready   W
+Pad: PAD_COREVSS4                    W  PVSS1DGZ
+Pad: PAD_IOVSS4                      W  PVSS2DGZ
