@@ -450,6 +450,13 @@ void translate_to_machine_code(uint8_t *mem, instr *imem, char *argv1)
 			binary += i.a1.reg << 7;
 			binary += (i.a2.imm << 12);
 			break;
+		
+		case AUIPC:
+			// rf[i.a1.reg] = (i.a2.imm<<12);
+			binary = (0x05 << 2) + 0x03;
+			binary += i.a1.reg << 7;
+			binary += (i.a2.imm << 12);
+			break;
 
 		case HCF:
 			binary = 0x0000000B;
