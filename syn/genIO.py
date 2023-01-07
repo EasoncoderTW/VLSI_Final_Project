@@ -6,7 +6,7 @@ def genIOPort(str, input=True, position='N', len=1):
         if input is True:
             print(f'PDIDGZ PAD_{InstName}{i} (.PAD(PI_{InstName}[{i}]), .C(WIRE_{InstName}[{i}]));')
         else:
-            print(f'PDO02CDG PAD_{InstName}{i} (.I(WIRE_{InstName}[{i}]), .PAD(PI_{InstName}[{i}]));')
+            print(f'PDO02CDG PAD_{InstName}{i} (.I(WIRE_{InstName}[{i}]), .PAD(PO_{InstName}[{i}]));')
     print('')
     print('')
     print('')
@@ -14,5 +14,5 @@ def genIOPort(str, input=True, position='N', len=1):
     for i in range(len):
         print(f'Pad: Pad_{InstName}{i} {position}')
 
-
-genIOPort('PDIDGZ PAD_Inst_Cahe_readAddr_addr(.PAD(PI_Inst_Cahe_readAddr_addr), .C(WIRE_Inst_Cahe_readAddr_addr));', len=128)
+str='PDO02CDG PAD_Data_Cahe_writeData_strb(.I(WIRE_Data_Cahe_writeData_strb), .PAD(PO_Data_Cahe_writeData_strb));'
+genIOPort(str, len=16, input=False, position='W')
