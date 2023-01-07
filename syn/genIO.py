@@ -12,7 +12,7 @@ def genIOPort(str, input=True, position='N', len=1):
     print('')
     print('')
     for i in range(len):
-        print(f'Pad: Pad_{InstName}{i} {position}')
+        print(f'Pad: PAD_{InstName}{i} {position}')
 
 str='PDO02CDG PAD_Data_Cahe_writeData_strb(.I(WIRE_Data_Cahe_writeData_strb), .PAD(PO_Data_Cahe_writeData_strb));'
 genIOPort(str, len=16, input=False, position='W')
