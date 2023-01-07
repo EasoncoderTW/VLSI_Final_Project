@@ -176,7 +176,6 @@ Pad: PAD_IOVSS1                      N  PVSS2DGZ
 Pad: CORNER1                         NE PCORNER
 Pad: PAD_IOVDD2                      E  PVDD2DGZ
 Pad: PAD_COREVDD2                    E  PVDD1DGZ
-
 Pad: PAD_Inst_Cahe_readAddr_addr0    E
 Pad: PAD_Inst_Cahe_readAddr_addr1    E
 Pad: PAD_Inst_Cahe_readAddr_addr2    E
@@ -778,7 +777,6 @@ Pad: PAD_Data_Cahe_writeData_strb12  W
 Pad: PAD_Data_Cahe_writeData_strb13  W
 Pad: PAD_Data_Cahe_writeData_strb14  W
 Pad: PAD_Data_Cahe_writeData_strb15  W
-
 Pad: PAD_Data_Cahe_writeData_valid   W
 Pad: PAD_Data_Cahe_writeResp_ready   W
 Pad: PAD_COREVSS4                    W  PVSS1DGZ
