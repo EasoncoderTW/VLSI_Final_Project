@@ -35,7 +35,7 @@ module chip(
     PO_Data_Cahe_writeData_strb,
     PO_Data_Cahe_writeData_valid,
     PO_Data_Cahe_writeResp_ready,
-    PO_halt
+    PO_Hcf
 );
     input            PI_clk;                       //0
     input            PI_rst;                       //0
@@ -72,7 +72,7 @@ module chip(
     output  [15:0]   PO_Data_Cahe_writeData_strb;  //3
     output           PO_Data_Cahe_writeData_valid; //3
     output           PO_Data_Cahe_writeResp_ready; //3
-    output           PO_halt;                      //0
+    output           PO_Hcf;                      //0
 
     wire             WIRE_clk;
     wire             WIRE_rst;
@@ -108,44 +108,44 @@ module chip(
     wire  [15:0]     WIRE_Data_Cahe_writeData_strb;
     wire             WIRE_Data_Cahe_writeData_valid;
     wire             WIRE_Data_Cahe_writeResp_ready;
-    wire             WIRE_halt;
+    wire             WIRE_Hcf;
 
 CPU CPU(
-    .clk(WIRE_clk)
-    .rst(WIRE_rst)
-    .Inst_Cahe_readAddr_ready(WIRE_Inst_Cahe_readAddr_ready)
-    .Inst_Cahe_readData_data(WIRE_Inst_Cahe_readData_data)
-    .Inst_Cahe_readData_valid(WIRE_Inst_Cahe_readData_valid)
-    .Inst_Cahe_writeAddr_ready(WIRE_Inst_Cahe_writeAddr_ready)
-    .Inst_Cahe_writeData_ready(WIRE_Inst_Cahe_writeData_ready)
-    .Inst_Cahe_writeResp_msg(WIRE_Inst_Cahe_writeResp_msg)
-    .Inst_Cahe_writeResp_valid(WIRE_Inst_Cahe_writeResp_valid)
-    .Data_Cahe_readAddr_ready(WIRE_Data_Cahe_readAddr_ready)
-    .Data_Cahe_readData_data(WIRE_Data_Cahe_readData_data)
-    .Data_Cahe_readData_valid(WIRE_Data_Cahe_readData_valid)
-    .Data_Cahe_writeAddr_ready(WIRE_Data_Cahe_writeAddr_ready)
-    .Data_Cahe_writeData_ready(WIRE_Data_Cahe_writeData_ready)
-    .Data_Cahe_writeResp_msg(WIRE_Data_Cahe_writeResp_msg)
-    .Data_Cahe_writeResp_valid(WIRE_Data_Cahe_writeResp_valid)
-    .Inst_Cahe_readAddr_addr(WIRE_Inst_Cahe_readAddr_addr)
-    .Inst_Cahe_readAddr_valid(WIRE_Inst_Cahe_readAddr_valid)
-    .Inst_Cahe_readData_ready(WIRE_Inst_Cahe_readData_ready)
-    .Inst_Cahe_writeAddr_addr(WIRE_Inst_Cahe_writeAddr_addr)
-    .Inst_Cahe_writeAddr_valid(WIRE_Inst_Cahe_writeAddr_valid)
-    .Inst_Cahe_writeData_data(WIRE_Inst_Cahe_writeData_data)
-    .Inst_Cahe_writeData_strb(WIRE_Inst_Cahe_writeData_strb)
-    .Inst_Cahe_writeData_valid(WIRE_Inst_Cahe_writeData_valid)
-    .Inst_Cahe_writeResp_ready(WIRE_Inst_Cahe_writeResp_ready)
-    .Data_Cahe_readAddr_addr(WIRE_Data_Cahe_readAddr_addr)
-    .Data_Cahe_readAddr_valid(WIRE_Data_Cahe_readAddr_valid)
-    .Data_Cahe_readData_ready(WIRE_Data_Cahe_readData_ready)
-    .Data_Cahe_writeAddr_addr(WIRE_Data_Cahe_writeAddr_addr)
-    .Data_Cahe_writeAddr_valid(WIRE_Data_Cahe_writeAddr_valid)
-    .Data_Cahe_writeData_data(WIRE_Data_Cahe_writeData_data)
-    .Data_Cahe_writeData_strb(WIRE_Data_Cahe_writeData_strb)
-    .Data_Cahe_writeData_valid(WIRE_Data_Cahe_writeData_valid)
-    .Data_Cahe_writeResp_ready(WIRE_Data_Cahe_writeResp_ready)
-    .halt(WIRE_halt)
+    .clk(WIRE_clk),
+    .rst(WIRE_rst),
+    .Inst_Cahe_readAddr_ready(WIRE_Inst_Cahe_readAddr_ready),
+    .Inst_Cahe_readData_data(WIRE_Inst_Cahe_readData_data),
+    .Inst_Cahe_readData_valid(WIRE_Inst_Cahe_readData_valid),
+    .Inst_Cahe_writeAddr_ready(WIRE_Inst_Cahe_writeAddr_ready),
+    .Inst_Cahe_writeData_ready(WIRE_Inst_Cahe_writeData_ready),
+    .Inst_Cahe_writeResp_msg(WIRE_Inst_Cahe_writeResp_msg),
+    .Inst_Cahe_writeResp_valid(WIRE_Inst_Cahe_writeResp_valid),
+    .Data_Cahe_readAddr_ready(WIRE_Data_Cahe_readAddr_ready),
+    .Data_Cahe_readData_data(WIRE_Data_Cahe_readData_data),
+    .Data_Cahe_readData_valid(WIRE_Data_Cahe_readData_valid),
+    .Data_Cahe_writeAddr_ready(WIRE_Data_Cahe_writeAddr_ready),
+    .Data_Cahe_writeData_ready(WIRE_Data_Cahe_writeData_ready),
+    .Data_Cahe_writeResp_msg(WIRE_Data_Cahe_writeResp_msg),
+    .Data_Cahe_writeResp_valid(WIRE_Data_Cahe_writeResp_valid),
+    .Inst_Cahe_readAddr_addr(WIRE_Inst_Cahe_readAddr_addr),
+    .Inst_Cahe_readAddr_valid(WIRE_Inst_Cahe_readAddr_valid),
+    .Inst_Cahe_readData_ready(WIRE_Inst_Cahe_readData_ready),
+    .Inst_Cahe_writeAddr_addr(WIRE_Inst_Cahe_writeAddr_addr),
+    .Inst_Cahe_writeAddr_valid(WIRE_Inst_Cahe_writeAddr_valid),
+    .Inst_Cahe_writeData_data(WIRE_Inst_Cahe_writeData_data),
+    .Inst_Cahe_writeData_strb(WIRE_Inst_Cahe_writeData_strb),
+    .Inst_Cahe_writeData_valid(WIRE_Inst_Cahe_writeData_valid),
+    .Inst_Cahe_writeResp_ready(WIRE_Inst_Cahe_writeResp_ready),
+    .Data_Cahe_readAddr_addr(WIRE_Data_Cahe_readAddr_addr),
+    .Data_Cahe_readAddr_valid(WIRE_Data_Cahe_readAddr_valid),
+    .Data_Cahe_readData_ready(WIRE_Data_Cahe_readData_ready),
+    .Data_Cahe_writeAddr_addr(WIRE_Data_Cahe_writeAddr_addr),
+    .Data_Cahe_writeAddr_valid(WIRE_Data_Cahe_writeAddr_valid),
+    .Data_Cahe_writeData_data(WIRE_Data_Cahe_writeData_data),
+    .Data_Cahe_writeData_strb(WIRE_Data_Cahe_writeData_strb),
+    .Data_Cahe_writeData_valid(WIRE_Data_Cahe_writeData_valid),
+    .Data_Cahe_writeResp_ready(WIRE_Data_Cahe_writeResp_ready),
+    .Hcf(WIRE_Hcf),
 );
 
 // input pads: PDIDGZ (.PAD(PI), .C(WIRE))
@@ -495,7 +495,7 @@ PDIDGZ PAD_Data_Cahe_writeResp_valid (.PAD(PI_Data_Cahe_writeResp_valid), .C(WIR
 
 // output pads: PDO02CDG (.I(WIRE), .PAD(PO))
 // CORNER0
-PDIDGZ PAD_halt (.I(WIRE_halt), .PAD(PO_halt));
+PDO02CDG PAD_Hcf (.I(WIRE_Hcf), .PAD(PO_Hcf));
 
 // CORNER1
 PDO02CDG PAD_Inst_Cahe_readAddr_addr0 (.I(WIRE_Inst_Cahe_readAddr_addr[0]), .PAD(PO_Inst_Cahe_readAddr_addr[0]));

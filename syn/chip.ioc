@@ -169,7 +169,7 @@ Pad: PAD_Inst_Cahe_writeResp_msg31   N
 Pad: PAD_Inst_Cahe_writeResp_valid   N
 Pad: PAD_clk                         N
 Pad: PAD_rst                         N
-Pad: PAD_halt                        N
+Pad: PAD_Hcf                         N
 Pad: PAD_COREVSS1                    N  PVSS1DGZ
 Pad: PAD_IOVSS1                      N  PVSS2DGZ
 
