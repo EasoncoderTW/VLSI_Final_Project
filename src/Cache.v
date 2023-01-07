@@ -28,7 +28,7 @@ module Cache(
     input [15:0] address,
     input [31:0] write_data,
     output [31:0] read_data,
-    output ready,
+    output valid,
     /* AXI Lite 4 IO */
     // read port
     output  [31:0]  readAddr_addr,
@@ -62,6 +62,7 @@ wire validin;
 wire dataram_sel;
 wire [`CACHE_LINE_BIT_LENGTH-1:0] dataram_datain;
 wire [`CACHE_LINE_BIT_LENGTH-1:0] dataram_dataout;
+wire [`CACHE_LINE_BIT_LENGTH-1:0] dataout;
 wire [15:0] dataram_strb;
 wire cache_line_valid;
 wire [7:0] cache_line_tag;
@@ -106,19 +107,20 @@ Cache_Controller Cache_Controller(
     .writeResp_msg(writeResp_msg),
     .readAddr_valid(readAddr_valid), .readData_ready(readData_ready), //output
     .writeAddr_valid(writeAddr_valid), .writeData_valid(writeData_valid), .writeResp_ready(writeResp_ready), 
-    .dataram_sel(dataram_sel), .p_ready(ready), .w_tagram(w_tagram), .w_validram(w_validram), .w_dataram(w_dataram), .validin(validin)
+    .dataram_sel(dataram_sel), .p_ready(valid), .w_tagram(w_tagram), .w_validram(w_validram), .w_dataram(w_dataram), .validin(validin)
     );
 
 Data16Mux Data16Mux(.sel(dataram_sel), .A(cache_line_strb), .B(16'hffff), .out(dataram_strb));
 
 // DataRam flow out a cache line in one read
 // Thus, we have to choose which word to flow into our processor
+assign dataout = (readData_valid == 1'b1) ? readData_data : dataram_dataout;
 Data32Mux4to1 Data32Mux4to1(
     .sel(address[3:2]), 
-    .A(dataram_dataout[31:0]), 
-    .B(dataram_dataout[63:32]), 
-    .C(dataram_dataout[95:64]), 
-    .D(dataram_dataout[127:96]),
+    .A(dataout[31:0]), 
+    .B(dataout[63:32]), 
+    .C(dataout[95:64]), 
+    .D(dataout[127:96]),
     .out(read_data)
     );
 

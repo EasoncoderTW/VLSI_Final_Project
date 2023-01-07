@@ -1509,7 +1509,7 @@ void execute(uint8_t *mem, instr *imem, label_loc *labels, int label_count, bool
 		case JALR:
 			rf[i.a1.reg] = pc + 4;
 			pc_next = rf[i.a2.reg] + i.a3.imm;
-			printf("jalr %d %d(%d)\n", i.a1.reg, i.a3.imm, i.a2.reg);
+			//printf("jalr %d %d(%d)\n", i.a1.reg, i.a3.imm, i.a2.reg);
 			break;
 		case AUIPC:
 			rf[i.a1.reg] = pc + (i.a2.imm << 12);

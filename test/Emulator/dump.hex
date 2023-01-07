@@ -1,4 +1,4 @@
-00008137   lui x02, 0x00000008
+00010137   lui x02, 0x00000010
 00010113   addi x02, x02, 0x00000000
 ffc10113   addi sp, sp, -4
 00812023   sw s0, 0(sp)
@@ -100,10 +100,10 @@ ffc10113   addi sp, sp, -4
 00112023   sw ra, 0(sp)
 000485b3   add a1, s1, x0
 00040633   add a2, s0, x0
-fcdff16f   jal ra, mergesort
+fcdff0ef   jal ra, mergesort
 00140593   addi a1, s0, 1
 00090633   add a2, s2, x0
-fc1ff16f   jal ra, mergesort
+fc1ff0ef   jal ra, mergesort
 000485b3   add a1, s1, x0
 00040633   add a2, s0, x0
 000906b3   add a3, s2, x0
@@ -162,7 +162,7 @@ fec10113   addi sp, sp, -20
 01d3a023   sw t4, 0(t2)
 001a0a13   addi s4, s4, 1
 00190913   addi s2, s2, 1
-fb9ff0ef   j x0, while_loop_1
+fb9ff06f   j x0, while_loop_1
 0284c463   blt s1, s0, while_loop_2_end
 00241393   slli t2, s0, 2
 006383b3   add t2, t2, t1

@@ -59,8 +59,68 @@ always begin
                 top.memory.mem[i+14],
                 top.memory.mem[i+15]);
         end
-        $display("+++++++++++++++++ Data Memory Dump (Answer)+++++++++++++++++");
-        for(i=16'h9000 ;i< 16'h9200;i=i+16)begin
+        $display("+++++++++++++++++ Data Memory Dump (Sort Answer)+++++++++++++++++");
+        for(i=16'h9000 ;i< 16'h9120;i=i+16)begin
+            $display("mem[%h - %h] %h %h %h %h  %h %h %h %h  %h %h %h %h  %h %h %h %h",i,i+15,
+                top.memory.mem[i],
+                top.memory.mem[i+1],
+                top.memory.mem[i+2],
+                top.memory.mem[i+3],
+                top.memory.mem[i+4],
+                top.memory.mem[i+5],
+                top.memory.mem[i+6],
+                top.memory.mem[i+7],
+                top.memory.mem[i+8],
+                top.memory.mem[i+9],
+                top.memory.mem[i+10],
+                top.memory.mem[i+11],
+                top.memory.mem[i+12],
+                top.memory.mem[i+13],
+                top.memory.mem[i+14],
+                top.memory.mem[i+15]);
+        end
+        $display("+++++++++++++++++ Data Memory Dump (fib Answer)+++++++++++++++++");
+        for(i=16'hA000 ;i< 16'hA0af;i=i+16)begin            
+	    $display("mem[%h - %h] %h %h %h %h  %h %h %h %h  %h %h %h %h  %h %h %h %h",i,i+15,
+                top.memory.mem[i],
+                top.memory.mem[i+1],
+                top.memory.mem[i+2],
+                top.memory.mem[i+3],
+                top.memory.mem[i+4],
+                top.memory.mem[i+5],
+                top.memory.mem[i+6],
+                top.memory.mem[i+7],
+                top.memory.mem[i+8],
+                top.memory.mem[i+9],
+                top.memory.mem[i+10],
+                top.memory.mem[i+11],
+                top.memory.mem[i+12],
+                top.memory.mem[i+13],
+                top.memory.mem[i+14],
+                top.memory.mem[i+15]);
+        end
+        $display("+++++++++++++++++ Data Memory Dump (Conv2d Answer)+++++++++++++++++");
+        for(i=16'hB000 ;i< 16'hB040;i=i+16)begin
+            $display("mem[%h - %h] %h %h %h %h  %h %h %h %h  %h %h %h %h  %h %h %h %h",i,i+15,
+                top.memory.mem[i],
+                top.memory.mem[i+1],
+                top.memory.mem[i+2],
+                top.memory.mem[i+3],
+                top.memory.mem[i+4],
+                top.memory.mem[i+5],
+                top.memory.mem[i+6],
+                top.memory.mem[i+7],
+                top.memory.mem[i+8],
+                top.memory.mem[i+9],
+                top.memory.mem[i+10],
+                top.memory.mem[i+11],
+                top.memory.mem[i+12],
+                top.memory.mem[i+13],
+                top.memory.mem[i+14],
+                top.memory.mem[i+15]);
+        end
+        $display("+++++++++++++++++ Data Memory Dump (Instr_test Answer)+++++++++++++++++");
+        for(i=16'hC000 ;i< 16'hC0cf;i=i+16)begin
             $display("mem[%h - %h] %h %h %h %h  %h %h %h %h  %h %h %h %h  %h %h %h %h",i,i+15,
                 top.memory.mem[i],
                 top.memory.mem[i+1],
@@ -116,7 +176,7 @@ end
 
 initial begin
     /* load SRAM */
-    $readmemh("./test/Emulator/Mem.hex",top.memory.mem);
+    $readmemh("../test/prog2/Mem.hex",top.memory.mem);
     /* reset signal */
     clk = 0;
     rst = 0;

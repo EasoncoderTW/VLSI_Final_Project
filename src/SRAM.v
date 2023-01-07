@@ -33,6 +33,7 @@ reg read_ps;
 reg [2:0] write_ps;
 reg [7:0] mem [0:65535]; // 1 byte per addr mem
 reg [15:0] write_addr;
+reg [15:0] write_strb;
 reg [127:0] write_data;
 
 wire [15:0] read_addr;
@@ -100,18 +101,22 @@ always @(posedge clk) begin : fsm_write
         WIDLE: begin
             write_addr <= (writeAddr_valid == 1) ? writeAddr_addr[15:0] : write_addr;
             write_data <= (writeData_valid == 1) ? writeData_data : write_data;
+            write_strb <= (writeData_valid == 1) ? writeData_strb : write_strb;
         end
         WAITWADDR: begin
             write_addr <= (writeAddr_valid == 1) ? writeAddr_addr[15:0] : write_addr;
             write_data <= write_data;
+            write_strb <= write_strb;
         end
         WAITWDATA: begin
             write_addr <= write_addr;
             write_data <= (writeData_valid == 1) ? writeData_data : write_data;
+            write_strb <= (writeData_valid == 1) ? writeData_strb : write_strb;
         end
         default: begin
             write_addr <= 16'b0;
             write_data <= 128'b0;
+            write_strb <= 16'b0;
         end
     endcase
 end
@@ -120,22 +125,22 @@ end
 // Because the index range with semicolon must be const based on verilog's std.
 always @(posedge clk) begin
     if(write_ps == WRITE) begin
-        mem[write_addr + 16'd15] <= (writeData_strb[15] == 1) ? write_data[127:120] : mem[write_addr + 16'd15];
-        mem[write_addr + 16'd14] <= (writeData_strb[14] == 1) ? write_data[119:112] : mem[write_addr + 16'd14];
-        mem[write_addr + 16'd13] <= (writeData_strb[13] == 1) ? write_data[111:104] : mem[write_addr + 16'd13];
-        mem[write_addr + 16'd12] <= (writeData_strb[12] == 1) ? write_data[103:96]  : mem[write_addr + 16'd12];
-        mem[write_addr + 16'd11] <= (writeData_strb[11] == 1) ? write_data[95:88]   : mem[write_addr + 16'd11];
-        mem[write_addr + 16'd10] <= (writeData_strb[10] == 1) ? write_data[87:80]   : mem[write_addr + 16'd10];
-        mem[write_addr + 16'd9]  <= (writeData_strb[9] == 1)  ? write_data[79:72]   : mem[write_addr + 16'd9];
-        mem[write_addr + 16'd8]  <= (writeData_strb[8] == 1)  ? write_data[71:64]   : mem[write_addr + 16'd8];
-        mem[write_addr + 16'd7]  <= (writeData_strb[7] == 1)  ? write_data[63:56]   : mem[write_addr + 16'd7];
-        mem[write_addr + 16'd6]  <= (writeData_strb[6] == 1)  ? write_data[55:48]   : mem[write_addr + 16'd6];
-        mem[write_addr + 16'd5]  <= (writeData_strb[5] == 1)  ? write_data[47:40]   : mem[write_addr + 16'd5];
-        mem[write_addr + 16'd4]  <= (writeData_strb[4] == 1)  ? write_data[39:32]   : mem[write_addr + 16'd4];
-        mem[write_addr + 16'd3]  <= (writeData_strb[3] == 1)  ? write_data[31:24]   : mem[write_addr + 16'd3];
-        mem[write_addr + 16'd2]  <= (writeData_strb[2] == 1)  ? write_data[23:16]   : mem[write_addr + 16'd2];
-        mem[write_addr + 16'd1]  <= (writeData_strb[1] == 1)  ? write_data[15:8]    : mem[write_addr + 16'd1];
-        mem[write_addr + 16'd0]  <= (writeData_strb[0] == 1)  ? write_data[7:0]     : mem[write_addr + 16'd0];
+        mem[write_addr + 16'd15] <= (write_strb[15] == 1) ? write_data[127:120] : mem[write_addr + 16'd15];
+        mem[write_addr + 16'd14] <= (write_strb[14] == 1) ? write_data[119:112] : mem[write_addr + 16'd14];
+        mem[write_addr + 16'd13] <= (write_strb[13] == 1) ? write_data[111:104] : mem[write_addr + 16'd13];
+        mem[write_addr + 16'd12] <= (write_strb[12] == 1) ? write_data[103:96]  : mem[write_addr + 16'd12];
+        mem[write_addr + 16'd11] <= (write_strb[11] == 1) ? write_data[95:88]   : mem[write_addr + 16'd11];
+        mem[write_addr + 16'd10] <= (write_strb[10] == 1) ? write_data[87:80]   : mem[write_addr + 16'd10];
+        mem[write_addr + 16'd9]  <= (write_strb[9] == 1)  ? write_data[79:72]   : mem[write_addr + 16'd9];
+        mem[write_addr + 16'd8]  <= (write_strb[8] == 1)  ? write_data[71:64]   : mem[write_addr + 16'd8];
+        mem[write_addr + 16'd7]  <= (write_strb[7] == 1)  ? write_data[63:56]   : mem[write_addr + 16'd7];
+        mem[write_addr + 16'd6]  <= (write_strb[6] == 1)  ? write_data[55:48]   : mem[write_addr + 16'd6];
+        mem[write_addr + 16'd5]  <= (write_strb[5] == 1)  ? write_data[47:40]   : mem[write_addr + 16'd5];
+        mem[write_addr + 16'd4]  <= (write_strb[4] == 1)  ? write_data[39:32]   : mem[write_addr + 16'd4];
+        mem[write_addr + 16'd3]  <= (write_strb[3] == 1)  ? write_data[31:24]   : mem[write_addr + 16'd3];
+        mem[write_addr + 16'd2]  <= (write_strb[2] == 1)  ? write_data[23:16]   : mem[write_addr + 16'd2];
+        mem[write_addr + 16'd1]  <= (write_strb[1] == 1)  ? write_data[15:8]    : mem[write_addr + 16'd1];
+        mem[write_addr + 16'd0]  <= (write_strb[0] == 1)  ? write_data[7:0]     : mem[write_addr + 16'd0];
     end
 end
 

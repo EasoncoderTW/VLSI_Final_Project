@@ -1,3 +1,4 @@
+#possible problem: data hazard/ store reg convention/store addr/jal compile config  
 .data
 test1: .word 16 2 4 16 4 10 12 2 14 8 4 14 6 4 2 10 12 6 10 2 14 14 6 8 16 8 16 6 12 10 8 123
 test2: .word 470 405 225 197 126 122 56 33 -81 -275 -379 -409 -416 -496 -500
@@ -10,6 +11,7 @@ WEIGHT: .word 22,38,56,40,25,33,55,40,34
 IFM_SIZE: .word 5
 IFM_NUM: .word 25
 KER_SIZE: .word 3
+test: .word 865468 -7623579 185 47443
 _answer: .word 0
 
 
@@ -17,8 +19,8 @@ _answer: .word 0
 
     li sp 0x10000
 main:
-    addi  sp, sp ,-4
-    sw s0, 0(sp)
+    #addi  sp, sp ,-4
+    #sw s0, 0(sp)
     la s0, _answer
     
     # Collee save
@@ -121,8 +123,11 @@ copy_loop:
     lw    s3, 0(sp)   
     # MEM[@sp-16] -> @s3
     addi  sp, sp, 16
-    jal fib_and_instest
-    jal conv2d
+    jal ra fib
+    #to enhance coverage
+    jal ra fib
+    jal ra conv2d
+    jal ra instr_test
     jal x0 main_exit
 
     
@@ -379,193 +384,58 @@ while_loop_3_end:
     jalr x0, 0(ra)
 
 
-fib_and_instest:
-    addi sp sp -8
-    sw ra 4(sp)
-    sw s0 0(sp)
-    # t6  store pointer
-    lui  t6 0xA
-    addi t0 x0 1 
-    addi t1 x0 1 
+fib:
+    lui sp 8
+    addi sp, sp, -8
+    sw ra, 4(sp) 
+    sw s0, 0(sp)
+    # t6,  store pointer
+    lui  t6, 0xA
+    addi t0, x0, 1 
+    addi t1, x0, 1 
     #do 30 times
-    addi t5 x0 30   
-    sw t0 0(t6)  
-    addi t6 t6 4 
+    addi t5, x0, 30   
+    sw t0, 0(t6)  
+    addi t6, t6, 4 
     #t4 = counter
-    addi t4 x0 2  
-    sw t1 0(t6) 
-    beq t4 t5 test 
+    addi t4, x0, 2  
+    sw t1, 0(t6) 
+    beq t4, t5, fib_exit 
     # x1 as rd 
-    jal x1 fib_loop
-test:
-    jal x1 test_lb_lh_sb_sh_blt
-    jal x1 test_lbu_lhu_bge
-    jal x1 test_sub_sll_srl_sra_bltu
-    jal x1 test_xori_slli_srli_srai
-    jal x1 test_or_and_xor_slt_sltu
-    jal x1 test_andi_ori_slti_sltiu_bgeu
-    jal x1 test_lui_auipc
-    jal x1 fib_exit
-
+    jal x1, fib_loop 
+    jal x0 fib_exit
 fib_loop:
-	addi t6 t6 4 
-	addi t4 t4 1 
-	#  t2 = t1 + t2
-	add t2 t1 t0  
-	sw t2 0(t6) 
-	#  t4 ==t5 then target
-	beq t4 t5 go_back  
-	addi t6 t6 4 
-	addi t4 t4 1 
-	#  t1 = t1 + t2
-	add t0 t2 t1  
-	sw t0 0(t6) 
-	beq t4 t5 go_back  
-	addi t6 t6 4 
-	addi t4 t4 1 
-	#  t2 = t1 + t2
-	add t1 t0 t2  
-	sw t1 0(t6) 
-	beq t4 t5 go_back 
-	# loop ---
-	jal x0 fib_loop  
+    addi t6, t6, 4 
+    addi t4, t4, 1 
+    #  t2 = t1 + t2
+    add t2, t1, t0  
+    add x0, x11, x11
+    sw t2, 0(t6) 
+    #  t4 ==t5 then target
+    beq t4, t5, go_back  
+    addi t6, t6, 4 
+    addi t4, t4, 1 
+    #  t1 = t1 + t2
+    add t0, t2, t1  
+    add x0, x11, x11
+    sw t0, 0(t6) 
+    beq t4, t5, go_back  
+    addi t6, t6, 4 
+    addi t4, t4, 1 
+    #  t2 = t1 + t2
+    add t1, t0, t2  
+    add x0, x11, x11
+    sw t1, 0(t6) 
+    beq t4, t5, go_back 
+    # loop ---
+    jal x0, fib_loop  
 
 go_back:
-	addi t6 t6 4
-	#as ==================
-	sw x0 0(t6)
-	jalr x0 0(x1)
-
-test_lb_lh_sb_sh_blt:
-	#s0 load pointer
-	lui s0 0xA 
-	lb t1 44(s0)
-	addi t6 t6 4
-	sw t1 0(t6)
-	addi t6 t6 4
-	sb t1 0(t6)
-	lh t2 108(s0)
-	addi t6 t6 4
-	sw t2 0(t6)
-	addi t6 t6 4
-	sh t2 0(t6)
-	#t2 < t1 (because of sign extension) 
-	blt t2 t1 go_back 
-
-test_lbu_lhu_bge:
-	lbu t1 44(s0)
-	addi t6 t6 4
-	sw t1 0(t6)
-	lhu t2 108(s0)
-	addi t6 t6 4
-	sw t2 0(t6)
-	#t2 < t1 (because of sign extension) 
-	bge t2 t1 go_back 
-
-test_sub_sll_srl_sra_bltu:
-
-	lw t1 48(s0)
-	lw t2 52(s0)
-	lw t4 12(s0)
-	#test sub
-	sub t3 t2 t1
-	addi t6 t6 4
-	sw t3 0(t6)
-	#test sll
-	sll t3 t1 t4 
-	addi t6 t6 4
-	sw t3 0(t6)
-	#test srl
-	srl t3 t1 t4 
-	addi t6 t6 4
-	sw t3 0(t6)
-	#test sra
-	sra t3 t1 t4
-	addi t6 t6 4
-	sw t3 0(t6)
-	bltu t1 t2 go_back
-
-test_xori_slli_srli_srai:
-
-	lw t1 48(s0)
-	#test xori (777)10= (t34)16 = (101000110100)2
-	xori t2 t1 777
-	addi t6 t6 4
-	sw t2 0(t6)
-	#test slli
-	slli t2 t1 4
-	addi t6 t6 4
-	sw t2 0(t6)
-	#test srli
-	srli t2 t1 4 
-	addi t6 t6 4
-	sw t2 0(t6)
-	#test srai
-	srai t2 t1 4 
-	addi t6 t6 4
-	sw t2 0(t6)
-	bltu t2 t1 go_back
-
-test_or_and_xor_slt_sltu:
-
-	lw t1 48(s0)
-	lw t2 52(s0)
-	#test or
-	or t3 t2 t1
-	addi t6 t6 4
-	sw t3 0(t6)
-	#test and
-	and t3 t2 t1
-	addi t6 t6 4
-	sw t3 0(t6)
-	#test xor
-	xor t3 t2 t1
-	addi t6 t6 4
-	sw t3 0(t6)
-	#test xor
-	slt t3 t2 t1
-	addi t6 t6 4
-	sw t3 0(t6)
-	#test xor
-	sltiu t3 t2 777
-	addi t6 t6 4
-	sw t3 0(t6)
-	bltu t3 t1 go_back
-
-test_andi_ori_slti_sltiu_bgeu:
-
-	lw t1 48(s0)
-	#test andi (2612)10= (t34)16 = (101000110100)2
-	andi t2 t1 777
-	addi t6 t6 4
-	sw t2 0(t6)
-	#test ori
-	ori t2 t1 777
-	addi t6 t6 4
-	sw t2 0(t6)
-	#test slti
-	slti t2 t1 777 
-	addi t6 t6 4
-	sw t2 0(t6)
-	#test sltiu
-	sltiu t2 t1 777 
-	addi t6 t6 4
-	sw t2 0(t6)
-	bgeu t1 t2 go_back
-
-test_lui_auipc:
-
-	lw t1 48(s0)
-	#test lui (2612)10= (t34)16 = (101000110100)2
-	lui t1 777
-	addi t6 t6 4
-	sw t1 0(t6)
-	#test auipc
-	auipc t2 777
-	addi t6 t6 4
-	sw t2 0(t6)
-	bgeu t2 t1 go_back
-
+    addi t6, t6, 4
+    add x0, x11, x11
+    #as ==================
+    sw x0, 0(t6)
+    jalr x0, 0(ra)
 
 fib_exit:
 	lw s0 0(sp)
@@ -624,7 +494,7 @@ IFM_x_keep:
     addi t1 t1 -1
     add s4 s4 s1
     bne t1 x0 conv2d_loop_IFM_xaxis
-    jal x0 exit_conv2d
+    jal x0 conv2d_exit
 
 conv2d_loop_IFM_yaxis:
     #s10 WEI x_addr
@@ -697,7 +567,7 @@ add_to_psum:
     jal x0 keep_mul
 
 
-exit_conv2d:
+conv2d_exit:
     ##restore reg 
     lw ra, 0(sp)
     lw s1, 4(sp)
@@ -713,16 +583,331 @@ exit_conv2d:
     addi sp, sp ,-44
     ret
 
+instr_test:
+    li sp 0x10000
+	addi sp sp -4
+	sw ra 0(sp) 
+	# t6  store pointer
+	lui  t6 0xC
+test_jal:
+	addi x1 x0 0 
+	jal x1 store_jal_result
+	#check x1 != 0
+	# _if jal has error ,do following instrs
+_error:
+	li t0 4095
+	addi t6 t6 4
+	sw t2 0(t6)
+	addi t6 t6 4
+	sw t2 0(t6)
+	addi t6 t6 4
+	sw t2 0(t6)
+	addi t6 t6 4
+	sw t2 0(t6)
+	addi t6 t6 4
+	sw t2 0(t6)	
+	jal x1 instr_exit
+store_jal_result:
+	#jal has no error
+	#14
+	sw x1 0(t6)
+	#as ==================
+	addi t6 t6 4
+	sw x0 0(t6)
+start_test:
+# x1 as rd
+	jal x1 test_lb_lh_sb_sh_blt
+	jal x1 test_add_addi_beq 
+	jal x1 test_bne
+	jal x1 test_blt_equal
+	jal x1 test_lbu_lhu_bge
+	jal x1 test_bge_equal
+	jal x1 test_sub_sll_srl_sra_bltu
+	jal x1 test_bgeu_equal
+	jal x1 test_xori_slli_srli_srai
+	jal x1 test_or_and_xor_slt_sltu
+	jal x1 test_andi_ori_slti_sltiu_bgeu
+	jal x1 test_lui_auipc
+	jal x0 instr_exit
+
+test_lb_lh_sb_sh_blt:
+	la t4 test
+	lb t1 8(t4)
+	addi t6 t6 4
+	#B9 FFFFFF
+	sw t1 0(t6)
+	addi t6 t6 4
+	#B9
+	sb t1 0(t6)
+	lh t2 12(t4)
+	addi t6 t6 4
+	#53B9 FFFF
+	sw t2 0(t6)
+	addi t6 t6 4
+	#53B9
+	sh t2 0(t6)
+	#t2 < t1 (because of sign extension) 
+	# there are some error
+	blt t1 t2 error
+	# correct
+	blt t2 t1 go_back 
+	jal x0 error
+test_blt_equal:
+	# there are some error 
+	blt t1 t1 error
+	#there r no err
+	jal x0 go_back
+
+test_add_addi_beq:
+	li t1 33
+	li t2 77
+	add t3 t1 t2
+	addi t6 t6 4
+	#6E
+	sw t3 0(t6)
+	addi t3 t1 56
+	addi t6 t6 4
+	#59
+	sw t3 0(t6)
+	beq t1 t2 error
+	li t2 33
+	beq t1 t2 go_back
+	jal x0 error
+
+test_bne:
+	li t1 33
+	li t2 33
+	li t3 34
+	bne t1 t2 error
+	# will store 0x0800
+	bne t1 t3 pass 
+	jal x0 error
+pass:
+	li t2 128
+	addi t6 t6 4
+	sw t2 0(t6)
+	jal x0 go_back
+
+test_lbu_lhu_bge:
+	la t4 test
+	lbu t1 8(t4)
+	addi t6 t6 4
+	#B9
+	sw t1 0(t6)
+	lhu t2 12(t4)
+	addi t6 t6 4
+	#B953
+	sw t2 0(t6)
+	#t2 < t1 (because of sign extension)
+	# there are some error 
+	bge t1 t2 error
+	# correct
+	bge t2 t1 go_back 
+	jal x0 error
+test_bge_equal:
+	#check if there are some error 
+	bge t1 t1 go_back
+	jal x0 error
+
+test_sub_sll_srl_sra_bltu:
+
+	la t4 test
+	add x0 x31 x31
+	lw t1 0(t4)
+	lw t2 4(t4)
+	li t5 8
+	#test sub
+	sub t3 t2 t1
+	addi t6 t6 4
+	#FF7E77A9
+	sw t3 0(t6)
+	#test sll
+	sll t3 t1 t5 
+	addi t6 t6 4
+	#0D34BC00
+	sw t3 0(t6)
+	#test srl
+	srl t3 t1 t5 
+	addi t6 t6 4
+	#0D34
+	sw t3 0(t6)
+	#test sra
+	sra t3 t1 t5
+	addi t6 t6 4
+	#0D34
+	sw t3 0(t6)
+	# there are some error
+	bltu t2 t1 error
+	#correct
+	bltu t1 t2 go_back
+	jal x0 error
+test_bltu_equal:
+	# there are some error 
+	bltu t1 t1 error
+	# no error
+	jal x0 go_back
+
+test_xori_slli_srli_srai:
+
+	li t1 666
+	#test xori (777)10= (309)16 = (1100001001)2
+	xori t2 t1 777
+	addi t6 t6 4
+	#0193
+	sw t2 0(t6)
+	#test slli
+	slli t2 t1 4
+	addi t6 t6 4
+	#29A0
+	sw t2 0(t6)
+	#test srli
+	srli t2 t1 4 
+	addi t6 t6 4
+	#29
+	sw t2 0(t6)
+	#test srai
+	srai t2 t1 4 
+	addi t6 t6 4
+	#29
+	sw t2 0(t6)
+	bltu t2 t1 go_back
+	jal x0 error
+
+test_or_and_xor_slt_sltu:
+
+	la t3 test
+	lw t1 0(t3)
+	lw t2 4(t3)
+	#test or
+	or t3 t2 t1
+	addi t6 t6 4
+	#230D7FBF
+	sw t3 0(t6)
+	#test and
+	and t3 t2 t1
+	addi t6 t6 4
+	#048C
+	sw t3 0(t6)
+	#test xor
+	xor t3 t2 t1
+	addi t6 t6 4
+	#230D7B33
+	sw t3 0(t6)
+	#test slt
+	slt t3 t2 t1
+	addi t6 t6 4
+	#0
+	sw t3 0(t6)
+	slt t3 t1 t2
+	addi t6 t6 4
+	#1
+	sw t3 0(t6)
+	#test sltu
+	sltu t3 t2 t1
+	addi t6 t6 4
+	#0
+	sw t3 0(t6)
+	sltu t3 t1 t2
+	addi t6 t6 4
+	#1
+	sw t3 0(t6)
+	bltu t3 t1 go_back
+	jal x0 error
+
+test_andi_ori_slti_sltiu_bgeu:
+
+	la t3 test
+	lw t1 0(t3)
+	lw t2 4(t3)			
+	#test andi (777)10= (309)16 = (1100001001)2
+	andi t3 t1 777
+	addi t6 t6 4
+	#08
+	sw t3 0(t6)
+	#test ori
+	ori t3 t1 777
+	addi t6 t6 4
+	#0d37BD
+	sw t3 0(t6)
+	#test slti
+	slti t3 t1 777 
+	addi t6 t6 4
+	#0
+	sw t3 0(t6)
+	slti t3 t2 777 
+	addi t6 t6 4
+	#1
+	sw t3 0(t6)
+	#test sltiu
+	sltiu t3 t1 777 
+	addi t6 t6 4
+	#0
+	sw t3 0(t6)
+	sltiu t3 t2 777 
+	addi t6 t6 4
+	#0
+	sw t3 0(t6)
+	la t3 test
+	lw t2 8(t3)	
+	sltiu t3 t2 777 
+	addi t6 t6 4
+	#1
+	sw t3 0(t6)
+	# there are some error 
+	bgeu t2 t1 error
+	#correct
+	bgeu t1 t2 go_back
+	jal x0 error
+test_bgeu_equal:
+	# there are some error 
+	bgeu t1 t1 go_back
+	# no error
+	jal x0 error
+
+test_lui_auipc:
+
+	#test lui (777)10= (309)16 = (1100001001)2
+	lui t1 777
+	addi t6 t6 4
+	#309000
+	sw t1 0(t6)
+	# test auipc
+	auipc t2 777
+	addi t6 t6 4
+	# 3092F8
+	sw t2 0(t6)
+	bgeu t2 t1 go_back
+	jal x0 error
+
+
+error:
+	#print 111111111111 5 times
+	li t2 4095
+	addi t6 t6 4
+	sw t2 0(t6)
+	addi t6 t6 4
+	sw t2 0(t6)
+	addi t6 t6 4
+	sw t2 0(t6)
+	addi t6 t6 4
+	sw t2 0(t6)
+	addi t6 t6 4
+	sw t2 0(t6)
+	jal x0 instr_exit
+
+instr_exit:
+	lw ra 0(sp)
+	addi sp sp 4 
+	ret
 
 main_exit:
     #/* Simulation End */
-    lw s0, 0(sp)
-    addi sp, sp, 4
-    
+    #lw s0, 0(sp)
+    #addi sp, sp, 4  
     # halt the cpu
+    #beq x0 x0 -4
     hcf
     hcf
     hcf
     hcf
     hcf
-	
