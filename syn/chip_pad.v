@@ -495,7 +495,7 @@ PDIDGZ PAD_Data_Cahe_writeResp_valid (.PAD(PI_Data_Cahe_writeResp_valid), .C(WIR
 
 // output pads: PDO02CDG (.I(WIRE), .PAD(PO))
 // CORNER0
-PDIDGZ PAD_halt (.I(WIRE_halt), .C(PO_halt));
+PDIDGZ PAD_halt (.I(WIRE_halt), .PAD(PO_halt));
 
 // CORNER1
 PDO02CDG PAD_Inst_Cahe_readAddr_addr0 (.I(WIRE_Inst_Cahe_readAddr_addr[0]), .PAD(PO_Inst_Cahe_readAddr_addr[0]));
