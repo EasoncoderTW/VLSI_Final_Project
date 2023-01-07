@@ -215,7 +215,7 @@ mergesort:
     addi  sp, sp, 12
     
 mergesort_ret:
-    jalr x0, 0(ra)
+    jalr x0, ra 0
 
 #--------------------#
 #   Function merge   #
@@ -381,7 +381,7 @@ while_loop_3_end:
     add   sp ,sp, t1    
     # @sp = @sp + temp_size
     
-    jalr x0, 0(ra)
+    jalr x0, ra 0
 
 
 fib:
@@ -435,7 +435,7 @@ go_back:
     add x0, x11, x11
     #as ==================
     sw x0, 0(t6)
-    jalr x0, 0(ra)
+    jalr x0, ra 0
 
 fib_exit:
 	lw s0 0(sp)
@@ -905,9 +905,9 @@ main_exit:
     #lw s0, 0(sp)
     #addi sp, sp, 4  
     # halt the cpu
-    #beq x0 x0 -4
-    hcf
-    hcf
-    hcf
-    hcf
-    hcf
+    beq x0 x0 -4
+    #hcf
+    #hcf
+    #hcf
+    #hcf
+    #hcf
