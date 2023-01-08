@@ -1,0 +1,89 @@
+00010137   lui x02, 0x00000010
+00010113   addi x02, x02, 0x00000000
+00008337   lui x06, 0x00000008
+08830313   addi x06, x06, 0x00000088
+00032303   lw t1, 0(t1)
+006005b3   add a1, x0, t1
+ffe30313   addi t1, t1, -2
+00000637   lui x12, 0x00000000
+00460613   addi x12, x12, 0x00000004
+0f0000ef   jal x1, multi
+00a004b3   add s1, x0, a0
+000085b7   lui x11, 0x00000008
+09058593   addi x11, x11, 0x00000090
+0005a583   lw a1, 0(a1)
+00000637   lui x12, 0x00000000
+00460613   addi x12, x12, 0x00000004
+0d4000ef   jal x1, multi
+00a00933   add s2, x0, a0
+0000be37   lui x28, 0x0000000b
+000e0e13   addi x28, x28, 0x00000000
+00008a37   lui x20, 0x00000008
+000a0a13   addi x20, x20, 0x00000000
+000083b7   lui x07, 0x00000008
+08838393   addi x07, x07, 0x00000088
+0003a383   lw t2, 0(t2)
+ffe38393   addi t2, t2, -2
+01400ab3   add s5, x0, s4
+0140006f   jal x0, conv2d_loop_ifm_yaxis
+fff30313   addi t1, t1, -1
+009a0a33   add s4, s4, s1
+fe0310e3   bne t1, x0, conv2d_loop_ifm_xaxis
+0d00006f   jal x0, exit_conv2d
+00008d37   lui x26, 0x00000008
+090d0d13   addi x26, x26, 0x00000090
+000d2d03   lw s10, 0(s10)
+000082b7   lui x05, 0x00000008
+00028293   addi x05, x05, 0x00000000
+000007b7   lui x15, 0x00000000
+00078793   addi x15, x15, 0x00000000
+01500b33   add s6, x0, s5
+00008c37   lui x24, 0x00000008
+064c0c13   addi x24, x24, 0x00000064
+01c0006f   jal x0, conv2d_loop_wei_xaxis
+fff38393   addi t2, t2, -1
+00fe2023   sw a5, 0(t3)
+004e0e13   addi t3, t3, 4
+004a8a93   addi s5, s5, 4
+fc0392e3   bne t2, x0, conv2d_loop_ifm_yaxis
+fb1ff06f   jal x0, ifm_x_keep
+00008db7   lui x27, 0x00000008
+090d8d93   addi x27, x27, 0x00000090
+000dad83   lw s11, 0(s11)
+01600bb3   add s7, x0, s6
+01800cb3   add s9, x0, s8
+0180006f   jal x0, conv2d_loop_wei_yaxis
+fffd0d13   addi s10, s10, -1
+009b0b33   add s6, s6, s1
+012c0c33   add s8, s8, s2
+fc0d1ee3   bne s10, x0, conv2d_loop_wei_xaxis
+fc1ff06f   jal x0, ifm_y_keep
+000ba583   lw a1, 0(s7)
+000ca603   lw a2, 0(s9)
+01c000ef   jal x1, multi
+00a787b3   add a5, a5, a0
+fffd8d93   addi s11, s11, -1
+004b8b93   addi s7, s7, 4
+004c8c93   addi s9, s9, 4
+fe0d92e3   bne s11, x0, conv2d_loop_wei_yaxis
+fcdff06f   jal x0, wei_x_keep
+00000737   lui x14, 0x00000000
+00870713   addi x14, x14, 0x00000008
+00000537   lui x10, 0x00000000
+00050513   addi x10, x10, 0x00000000
+08067813   andi a6, a2, 128
+00081e63   bne a6, x0, add_to_psum
+fff70713   addi a4, a4, -1
+00161613   slli a2, a2, 1
+00151513   slli a0, a0, 1
+fe0716e3   bne a4, x0, loop_multi
+00155513   srli a0, a0, 1
+00008067   jalr x0, x1, x0
+00b50533   add a0, a0, a1
+fe5ff06f   jal x0, keep_mul
+0000000b   hcf
+0000000b   hcf
+0000000b   hcf
+0000000b   hcf
+0000000b   hcf
+00000000   (null)

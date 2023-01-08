@@ -198,4 +198,27 @@ d86372e3   bgeu t1, t1, go_back
 00309337   lui t1, 777
 004f8f93   addi t6, t6, 4
 006fa023   sw t1, 0(t6)
-00000000   auipc t2, 777
+00309397   auipc t2, 777
+004f8f93   addi t6, t6, 4
+007fa023   sw t2, 0(t6)
+d663f2e3   bgeu t2, t1, go_back
+0040006f   jal x0, error
+000002b7   lui x05, 0x00000000
+fff28293   addi x05, x05, 0x00000fff
+004f8f93   addi t6, t6, 4
+007fa023   sw t2, 0(t6)
+004f8f93   addi t6, t6, 4
+007fa023   sw t2, 0(t6)
+004f8f93   addi t6, t6, 4
+007fa023   sw t2, 0(t6)
+004f8f93   addi t6, t6, 4
+007fa023   sw t2, 0(t6)
+004f8f93   addi t6, t6, 4
+007fa023   sw t2, 0(t6)
+0040006f   jal x0, exit
+0000000b   hcf
+0000000b   hcf
+0000000b   hcf
+0000000b   hcf
+0000000b   hcf
+00000000   (null)

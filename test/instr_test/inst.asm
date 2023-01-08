@@ -199,4 +199,26 @@ lui t1, 777
 addi t6, t6, 4
 sw t1, 0(t6)
 auipc t2, 777
+addi t6, t6, 4
+sw t2, 0(t6)
+bgeu t2, t1, go_back
+jal x0, error
+lui x05, 0x00000000
+addi x05, x05, 0x00000fff
+addi t6, t6, 4
+sw t2, 0(t6)
+addi t6, t6, 4
+sw t2, 0(t6)
+addi t6, t6, 4
+sw t2, 0(t6)
+addi t6, t6, 4
+sw t2, 0(t6)
+addi t6, t6, 4
+sw t2, 0(t6)
+jal x0, exit
+hcf
+hcf
+hcf
+hcf
+hcf
 hcf
